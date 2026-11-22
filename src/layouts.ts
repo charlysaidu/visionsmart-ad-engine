@@ -41,7 +41,7 @@ const CENTRADO: Record<Formato, Layout> = {
     podio: { cx: 540, cy: 940, rx: 340, ry: 70, alto: 48 },
     lista: { x: 60, y: 1030, ancho: 960, modo: 'fila', paso: 320, cantidad: 3, tam: 25, icono: 58 },
     precio: { x: 60, y: 1250, ancho: 540, ancla: 'start', tam: 96 },
-    garantia: { x: 790, y: 1165, w: 230, h: 110 },
+    garantia: { x: 790, y: 1150, w: 230, h: 110 },
     pie: { x: 540, y: 1326, ancla: 'middle' },
   },
   '1x1': {

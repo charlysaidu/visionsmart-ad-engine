@@ -17,9 +17,13 @@ import { layoutDe } from './layouts.ts';
 import { PLANTILLAS, IDS_PLANTILLAS } from './plantillas.ts';
 import * as P from './primitivas.ts';
 import { FORMATOS, FUENTE_JAKARTA, type ContextoAnuncio, type Formato, type ModoPrecio, type PlantillaId } from './tipos.ts';
+import { calcularPromo } from './promo.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '0.2.0-fase1';
+export const VERSION_MOTOR = '0.3.0-fase2';
+export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
+export { repartirPlantillas, crearAleatorio } from './repartir.ts';
+export { zipPorPartes, zipEnMemoria, crc32, nombreSeguro, type EntradaZip } from './zip.ts';
 export { FORMATOS, FUENTE_JAKARTA, PLANTILLAS, IDS_PLANTILLAS };
 export type { ContextoAnuncio, Formato, ModoPrecio, PlantillaId, Fuente, Plantilla, Layout } from './tipos.ts';
 export type { DatosProducto, Caracteristica, Garantia } from './datos.ts';
@@ -46,8 +50,12 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
   const marca = { web: 'visionsmart.ve', redes: '@visionsmart.ve', ...(ctx.marca ?? {}) };
 
   const { lineas, tam } = tituloEnLineas(prod.nombre, lay.titulo.ancho, lay.titulo.tamMax, lay.titulo.tamMin);
-  const txtPrecio = textosPrecio(ctx.precio ?? 'bs', prod.precioUsd, ctx.tasaBs);
-  const etiqueta = ctx.etiquetaPrecio === undefined ? 'DESDE' : ctx.etiquetaPrecio;
+  const modo = ctx.precio ?? 'bs';
+  const promo = calcularPromo(prod.precioUsd, ctx.promo);
+  // en promocion el precio grande es el promocional y el anterior sale tachado; la etiqueta pasa a "OFERTA"
+  const txtPrecio = textosPrecio(modo, promo ? promo.precioUsd : prod.precioUsd, ctx.tasaBs);
+  const txtAnterior = promo && promo.anteriorUsd != null && txtPrecio ? textosPrecio(modo, promo.anteriorUsd, ctx.tasaBs) : null;
+  const etiqueta = ctx.etiquetaPrecio === undefined ? (promo ? 'OFERTA' : 'DESDE') : ctx.etiquetaPrecio;
 
   // el orden de dibujo es el orden de las capas: fondo -> adornos -> (vidrio) -> podio -> foto -> textos -> logo/pie
   const cuerpo = [
@@ -59,8 +67,9 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
     P.logo(d),
     P.titulo(d, lineas, tam),
     P.lista(d, caracteristicasDe(prod, lay.lista.cantidad)),
-    P.precio(d, txtPrecio, txtPrecio ? etiqueta : null),
+    P.precio(d, txtPrecio, txtPrecio ? etiqueta : null, txtAnterior),
     P.garantia(d, garantiaDe(prod.garantia)),
+    promo ? P.promoExtras(d, promo) : '',
     P.pie(d, marca.web, marca.redes),
   ].join('');
 

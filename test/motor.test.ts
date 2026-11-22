@@ -15,7 +15,7 @@ const ctx: ContextoAnuncio = {
 };
 
 // Etiquetas SVG que react-native-svg interpreta bien (y Chromium tambien). Nada de filtros, foreignObject, style, script.
-const TAGS_OK = new Set(['svg', 'defs', 'linearGradient', 'radialGradient', 'stop', 'rect', 'circle', 'ellipse', 'path', 'polygon', 'polyline', 'g', 'text', 'tspan', 'image']);
+const TAGS_OK = new Set(['svg', 'defs', 'linearGradient', 'radialGradient', 'stop', 'rect', 'circle', 'ellipse', 'path', 'polygon', 'polyline', 'line', 'g', 'text', 'tspan', 'image']);
 
 const etiquetas = (svg: string) => [...svg.matchAll(/<([A-Za-z][A-Za-z0-9]*)[\s>/]/g)].map((m) => m[1]);
 

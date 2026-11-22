@@ -1,4 +1,5 @@
 import type { DatosProducto } from './datos.ts';
+import type { DatosPromo } from './promo.ts';
 
 export type Formato = '4x5' | '1x1' | '9x16';
 export const FORMATOS: Record<Formato, { ancho: number; alto: number }> = {
@@ -25,6 +26,8 @@ export type ContextoAnuncio = {
   precio?: ModoPrecio;
   /** Texto superior del precio (por defecto "DESDE"). */
   etiquetaPrecio?: string | null;
+  /** Modo promocion (precio anterior tachado, % de descuento, unidades limitadas, vigencia). */
+  promo?: DatosPromo | null;
   marca?: { web?: string; redes?: string };
   fuente?: Fuente;
 };

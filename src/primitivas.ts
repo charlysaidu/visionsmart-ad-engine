@@ -1,6 +1,7 @@
 import type { Caracteristica, Garantia } from './datos.ts';
 import { ICONOS } from './iconos.ts';
 import type { Ancla, Fuente, Grad, Layout, Plantilla } from './tipos.ts';
+import { textoUnidades, type PromoCalculada } from './promo.ts';
 import { esc, medir, n, partirTexto, tamParaAncho } from './util.ts';
 
 /** Todo lo que necesita una primitiva para dibujar. `defs` acumula degradados (ids unicos por SVG). */
@@ -221,7 +222,7 @@ export function lista(d: Dibujo, items: Caracteristica[]): string {
 }
 
 // ── Precio ──────────────────────────────────────────────────────────────────────
-export function precio(d: Dibujo, texto: string | null, etiqueta: string | null): string {
+export function precio(d: Dibujo, texto: string | null, etiqueta: string | null, anterior: string | null = null): string {
   if (!texto) return '';
   const P = d.lay.precio, p = d.p;
   d.defs.push(gradColores('precioG', p.precio.color, 0));
@@ -236,8 +237,38 @@ export function precio(d: Dibujo, texto: string | null, etiqueta: string | null)
     const x = P.ancla === 'end' ? xTxt - w + 28 : xTxt - 28;
     out.push(`<rect x="${n(x)}" y="${n(P.y - tam - lblTam - 40)}" width="${n(w)}" height="${n(h)}" rx="30" fill="#FFFFFF" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="2.5"/>`);
   }
-  if (etiqueta) out.push(`<text x="${xTxt}" y="${n(P.y - tam * 0.98)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
+  if (anterior) {
+    // precio anterior tachado ("ANTES Bs. 6.400") en la linea de la etiqueta; el tachado es una linea (text-decoration no es fiable en react-native-svg)
+    const txtAnt = `ANTES ${anterior}`, tamAnt = Math.round(lblTam * 1.2), yAnt = P.y - tam * 0.98;
+    const w = medir(txtAnt, 'bold', tamAnt);
+    const x1 = P.ancla === 'end' ? xTxt - w : P.ancla === 'middle' ? xTxt - w / 2 : xTxt;
+    out.push(`<text x="${xTxt}" y="${n(yAnt)}" font-family="${d.fu.bold}" font-size="${tamAnt}" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(txtAnt)}</text>`);
+    out.push(`<line x1="${n(x1)}" y1="${n(yAnt - tamAnt * 0.32)}" x2="${n(x1 + w)}" y2="${n(yAnt - tamAnt * 0.32)}" stroke="${p.precio.desde}" stroke-width="3" stroke-linecap="round"/>`);
+  } else if (etiqueta) out.push(`<text x="${xTxt}" y="${n(P.y - tam * 0.98)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
   out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(texto)}</text>`);
+  return out.join('');
+}
+
+// ── Promocion: chips de descuento / unidades y linea de vigencia ─────────────────
+export function promoExtras(d: Dibujo, promo: PromoCalculada): string {
+  const out: string[] = [];
+  const f = d.lay.foto;
+  const izquierda = d.p.familia === 'centrado';                    // en centrado el titulo va arriba a un lado; los chips van del lado de la foto
+  d.defs.push(gradColores('chipPromo', d.p.acento, 0));
+  let y = f.y + 8;
+  const chip = (texto: string, tam: number, relleno: string, colorTxt: string) => {
+    const w = medir(texto, 'extrabold', tam) + 44, h = Math.round(tam * 1.9);
+    const x = izquierda ? f.x : f.x + f.w - w;
+    out.push(`<rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${h}" rx="${n(h / 2)}" fill="${relleno}"/>`);
+    out.push(`<text x="${n(x + w / 2)}" y="${n(y + h * 0.66)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="middle" fill="${colorTxt}">${esc(texto)}</text>`);
+    y += h + 12;
+  };
+  if (promo.descuentoPct != null) chip(`-${promo.descuentoPct}%`, Math.round(d.W * 0.05), fillGrad('chipPromo'), '#FFFFFF');
+  if (promo.unidades != null) chip(textoUnidades(promo.unidades), Math.round(d.W * 0.026), 'rgba(0,0,0,0.62)', '#FFFFFF');
+  if (promo.vigencia) {
+    const P = d.lay.pie, tam = Math.round(d.W * (d.p.familia === 'editorial' ? 0.022 : 0.026));
+    out.push(`<text x="${P.x}" y="${n(P.y - d.W * 0.034)}" font-family="${d.fu.bold}" font-size="${tam}" letter-spacing="1" text-anchor="${P.ancla}" fill="${d.p.texto}">${esc(promo.vigencia)}</text>`);
+  }
   return out.join('');
 }
 
