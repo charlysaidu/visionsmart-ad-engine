@@ -1,0 +1,262 @@
+import type { Caracteristica, Garantia } from './datos.ts';
+import { ICONOS } from './iconos.ts';
+import type { Ancla, Fuente, Grad, Layout, Plantilla } from './tipos.ts';
+import { esc, medir, n, partirTexto, tamParaAncho } from './util.ts';
+
+/** Todo lo que necesita una primitiva para dibujar. `defs` acumula degradados (ids unicos por SVG). */
+export type Dibujo = { W: number; H: number; p: Plantilla; lay: Layout; fu: Fuente; defs: string[] };
+
+// ── Degradados ──────────────────────────────────────────────────────────────────
+function vec(angulo: number): string {
+  const r = (angulo * Math.PI) / 180, c = Math.cos(r) / 2, s = Math.sin(r) / 2;
+  return `x1="${n(0.5 - c)}" y1="${n(0.5 - s)}" x2="${n(0.5 + c)}" y2="${n(0.5 + s)}"`;
+}
+export function gradLineal(id: string, g: Grad): string {
+  const stops = g.paradas.map(([o, c, op]) => `<stop offset="${n(o)}" stop-color="${c}"${op != null ? ` stop-opacity="${n(op)}"` : ''}/>`).join('');
+  return `<linearGradient id="${id}" ${vec(g.angulo ?? 0)}>${stops}</linearGradient>`;
+}
+export function gradColores(id: string, colores: string[], angulo = 0): string {
+  const k = Math.max(1, colores.length - 1);
+  return gradLineal(id, { angulo, paradas: colores.map((c, i) => [i / k, c] as [number, string]) });
+}
+export function gradRadial(id: string, color: string, opCentro: number, opBorde = 0): string {
+  return `<radialGradient id="${id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${color}" stop-opacity="${n(opCentro)}"/><stop offset="1" stop-color="${color}" stop-opacity="${n(opBorde)}"/></radialGradient>`;
+}
+const fillGrad = (id: string) => `url(#${id})`;
+
+// ── Fondo y adornos ─────────────────────────────────────────────────────────────
+export function fondo(d: Dibujo): string {
+  d.defs.push(gradLineal('fondo', d.p.fondo));
+  return `<rect width="${d.W}" height="${d.H}" fill="${fillGrad('fondo')}"/>`;
+}
+
+function halo(d: Dibujo): string {
+  const h = d.p.halo;
+  if (!h) return '';
+  d.defs.push(gradRadial('halo', h.color, h.opacidad));
+  const f = d.lay.foto;
+  return `<ellipse cx="${n(f.x + f.w / 2)}" cy="${n(f.y + f.h * 0.55)}" rx="${n(f.w * 0.78)}" ry="${n(f.h * 0.62)}" fill="${fillGrad('halo')}"/>`;
+}
+
+function adornoNiebla(d: Dibujo): string {
+  d.defs.push(gradRadial('niebla', '#FFFFFF', 0.10));
+  return `<ellipse cx="${d.W * 0.2}" cy="${d.H * 0.78}" rx="${d.W * 0.6}" ry="${d.H * 0.22}" fill="${fillGrad('niebla')}"/>` +
+    `<ellipse cx="${d.W * 0.85}" cy="${d.H * 0.3}" rx="${d.W * 0.5}" ry="${d.H * 0.2}" fill="${fillGrad('niebla')}"/>`;
+}
+
+function adornoPuntos(d: Dibujo): string {
+  const claro = d.p.logo === 'claro';
+  const color = claro ? '#BFE0FF' : '#7C8CC8';
+  const out: string[] = [];
+  const x0 = d.W - 70, y0 = d.lay.logo.y + d.lay.logo.h + 40;
+  for (let c = 0; c < 12; c++) for (let r = 0; r < 6; r++) {
+    const dist = Math.sqrt(c * c + r * r) / 12;
+    if (dist < 1) out.push(`<circle cx="${n(x0 - c * 24)}" cy="${n(y0 + r * 24)}" r="2.6" fill="${color}" fill-opacity="${n(0.5 * (1 - dist))}"/>`);
+  }
+  return out.join('');
+}
+
+function adornoRayos(d: Dibujo): string {
+  d.defs.push(gradLineal('rayo', { angulo: 90, paradas: [[0, '#FFFFFF', 0], [0.5, '#CFE8FF', 0.28], [1, '#FFFFFF', 0]] }));
+  const f = d.lay.foto, cy = f.y + f.h * 0.6;
+  return `<g transform="rotate(-30 ${d.W / 2} ${n(cy)})"><rect x="-400" y="${n(cy - 20)}" width="${d.W + 800}" height="110" fill="${fillGrad('rayo')}"/><rect x="-400" y="${n(cy + 150)}" width="${d.W + 800}" height="34" fill="${fillGrad('rayo')}"/></g>` +
+    `<g transform="rotate(30 ${d.W / 2} ${n(f.y)})"><rect x="-400" y="${n(f.y - 40)}" width="${d.W + 800}" height="70" fill="${fillGrad('rayo')}" opacity="0.7"/></g>`;
+}
+
+function adornoSpot(d: Dibujo): string {
+  d.defs.push(gradLineal('cono', { angulo: 90, paradas: [[0, '#FFFFFF', 0.34], [0.7, '#CFE0FF', 0.08], [1, '#FFFFFF', 0]] }));
+  d.defs.push(gradRadial('spotGlow', '#FFFFFF', 0.5));
+  const cx = d.W / 2, f = d.lay.foto;
+  return `<polygon points="${n(cx - 90)},0 ${n(cx + 90)},0 ${n(cx + 470)},${n(f.y + f.h)} ${n(cx - 470)},${n(f.y + f.h)}" fill="${fillGrad('cono')}"/>` +
+    `<ellipse cx="${cx}" cy="0" rx="260" ry="90" fill="${fillGrad('spotGlow')}"/>`;
+}
+
+function adornoNeon(d: Dibujo): string {
+  const [c1, c2] = [d.p.acento[0], d.p.acento[d.p.acento.length - 1]];
+  d.defs.push(gradLineal('neonA', { angulo: 0, paradas: [[0, c1, 0], [0.5, c1, 0.55], [1, c2, 0]] }));
+  d.defs.push(gradLineal('neonB', { angulo: 0, paradas: [[0, c2, 0], [0.5, c2, 0.4], [1, c1, 0]] }));
+  const { W, H } = d;
+  const barra = (x: number, y: number, w: number, h: number, id: string, op: number) =>
+    `<polygon points="${n(x)},${n(y + h)} ${n(x + w)},${n(y + h - w * 0.55)} ${n(x + w)},${n(y - w * 0.55)} ${n(x)},${n(y)}" fill="${fillGrad(id)}" opacity="${op}"/>`;
+  return barra(W * 0.45, H * 0.24, W * 0.55, 26, 'neonA', 0.9) + barra(W * 0.30, H * 0.30, W * 0.7, 14, 'neonB', 0.8) +
+    barra(W * 0.55, H * 0.62, W * 0.45, 40, 'neonA', 0.55) + barra(W * 0.1, H * 0.84, W * 0.9, 10, 'neonB', 0.7) +
+    `<polyline points="${n(W * 0.62)},${n(H * 0.24)} ${n(W * 0.72)},${n(H * 0.32)} ${n(W * 0.62)},${n(H * 0.40)}" fill="none" stroke="${c1}" stroke-opacity="0.7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+
+function adornoPanel(d: Dibujo): string {
+  d.defs.push(gradLineal('panel', { angulo: 60, paradas: [[0, '#0A38D2'], [1, '#2A78FF']] }));
+  const { W, H } = d;
+  return `<polygon points="${n(W * 0.66)},0 ${W},0 ${W},${H} ${n(W * 0.52)},${H}" fill="${fillGrad('panel')}"/>`;
+}
+
+function adornoVidrio(d: Dibujo): string {
+  const f = d.lay.foto;
+  return `<rect x="${n(f.x + 20)}" y="${n(f.y - 10)}" width="${n(f.w - 40)}" height="${n(f.h + 60)}" rx="64" fill="#FFFFFF" fill-opacity="0.5" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="2.5"/>` +
+    `<rect x="${n(f.x + 40)}" y="${n(f.y + 6)}" width="${n(f.w - 80)}" height="${n(f.h * 0.35)}" rx="48" fill="#FFFFFF" fill-opacity="0.25"/>`;
+}
+
+function adornoAros(d: Dibujo): string {
+  const [c1, c2] = [d.p.acento[0], d.p.acento[d.p.acento.length - 1]];
+  d.defs.push(gradRadial('aroA', c1, 0.35), gradRadial('aroB', c2, 0.32));
+  return `<circle cx="${d.W * 0.88}" cy="${d.H * 0.18}" r="${d.W * 0.42}" fill="${fillGrad('aroA')}"/><circle cx="${d.W * 0.1}" cy="${d.H * 0.86}" r="${d.W * 0.46}" fill="${fillGrad('aroB')}"/>`;
+}
+
+function adornoEstrellas(d: Dibujo): string {
+  const est = (cx: number, cy: number, r: number, op: number) =>
+    `<path d="M${n(cx)} ${n(cy - r)}L${n(cx + r * 0.22)} ${n(cy - r * 0.22)}L${n(cx + r)} ${n(cy)}L${n(cx + r * 0.22)} ${n(cy + r * 0.22)}L${n(cx)} ${n(cy + r)}L${n(cx - r * 0.22)} ${n(cy + r * 0.22)}L${n(cx - r)} ${n(cy)}L${n(cx - r * 0.22)} ${n(cy - r * 0.22)}Z" fill="#FFFFFF" fill-opacity="${op}"/>`;
+  const f = d.lay.foto;
+  return est(f.x + f.w * 0.1, f.y + f.h * 0.2, 22, 0.9) + est(f.x + f.w * 0.92, f.y + f.h * 0.5, 16, 0.8) + est(f.x + f.w * 0.3, f.y + f.h * 0.08, 12, 0.7);
+}
+
+function adornoAureola(d: Dibujo): string {
+  d.defs.push(gradRadial('aureola', '#FFFFFF', 0.85));
+  const f = d.lay.foto;
+  return `<ellipse cx="${n(f.x + f.w / 2)}" cy="${n(f.y + f.h * 0.5)}" rx="${n(f.w * 0.85)}" ry="${n(f.h * 0.7)}" fill="${fillGrad('aureola')}"/>`;
+}
+
+const ADORNOS: Record<string, (d: Dibujo) => string> = {
+  niebla: adornoNiebla, puntos: adornoPuntos, rayos: adornoRayos, spot: adornoSpot, neon: adornoNeon,
+  panel: adornoPanel, vidrio: adornoVidrio, aros: adornoAros, estrellas: adornoEstrellas, aureola: adornoAureola,
+};
+
+/** Adornos de FONDO (todo menos "vidrio", que va justo detras de la foto). */
+export function adornosFondo(d: Dibujo): string {
+  return d.p.adornos.filter((a) => a !== 'vidrio').map((a) => (ADORNOS[a] ? ADORNOS[a](d) : '')).join('') + halo(d);
+}
+export function adornoDetrasFoto(d: Dibujo): string {
+  return d.p.adornos.includes('vidrio') ? ADORNOS.vidrio(d) : '';
+}
+
+// ── Podio ───────────────────────────────────────────────────────────────────────
+export function podio(d: Dibujo): string {
+  const t = d.p.podio;
+  if (t.tipo === 'ninguno') {
+    d.defs.push(gradRadial('sombraSuelo', '#2A3060', 0.28));
+    const f = d.lay.foto;
+    return `<ellipse cx="${n(f.x + f.w / 2)}" cy="${n(f.y + f.h + 10)}" rx="${n(f.w * 0.36)}" ry="26" fill="${fillGrad('sombraSuelo')}"/>`;
+  }
+  const { cx, cy, rx, ry } = d.lay.podio;
+  const alto = t.tipo === 'cilindro' ? d.lay.podio.alto * 2.6 : d.lay.podio.alto;
+  d.defs.push(gradColores('podTapa', t.tapa, 90), gradColores('podCuerpo', t.cuerpo, 90), gradRadial('podSombra', '#000000', 0.45), gradRadial('podBrillo', t.brillo, 0.55));
+  return `<ellipse cx="${cx}" cy="${n(cy + alto + ry * 0.4)}" rx="${n(rx * 1.12)}" ry="${n(ry * 0.9)}" fill="${fillGrad('podSombra')}"/>` +
+    `<ellipse cx="${cx}" cy="${n(cy + alto * 0.3)}" rx="${n(rx * 1.1)}" ry="${n(ry * 1.3)}" fill="${fillGrad('podBrillo')}"/>` +
+    `<path d="M${n(cx - rx)} ${n(cy)} L${n(cx - rx)} ${n(cy + alto)} A${n(rx)} ${n(ry)} 0 0 0 ${n(cx + rx)} ${n(cy + alto)} L${n(cx + rx)} ${n(cy)} Z" fill="${fillGrad('podCuerpo')}"/>` +
+    `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fillGrad('podTapa')}" stroke="${t.borde}" stroke-width="4" stroke-opacity="0.9"/>`;
+}
+
+// ── Foto ────────────────────────────────────────────────────────────────────────
+export function foto(d: Dibujo, href: string | null | undefined): string {
+  const f = d.lay.foto;
+  if (href) return `<image href="${esc(href)}" x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" preserveAspectRatio="xMidYMax meet"/>`;
+  // sin foto: el simbolo de la marca, tenue
+  return `<g opacity="0.22">${simbolo(d, f.x + f.w / 2, f.y + f.h * 0.5, Math.min(f.w, f.h) * 0.5, d.p.logo)}</g>`;
+}
+
+// ── Logo ────────────────────────────────────────────────────────────────────────
+function coloresLogo(v: 'claro' | 'oscuro'): string[] { return v === 'claro' ? ['#5EC4FF', '#8E7BFF', '#C264F0'] : ['#1367A4', '#4EA8DF', '#9D40CB']; }
+
+/** Simbolo de la marca (aro + punto + tallo) centrado en (cx, cy) con diametro `h`. */
+export function simbolo(d: Dibujo, cx: number, cy: number, h: number, v: 'claro' | 'oscuro'): string {
+  const id = `lg${Math.round(cx)}x${Math.round(cy)}`;
+  d.defs.push(gradColores(id, coloresLogo(v), 0));
+  const r = h / 2, sw = h * 0.1;
+  return `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r - sw / 2)}" fill="none" stroke="${fillGrad(id)}" stroke-width="${n(sw)}"/>` +
+    `<circle cx="${n(cx)}" cy="${n(cy - h * 0.1)}" r="${n(h * 0.17)}" fill="${fillGrad(id)}"/>` +
+    `<rect x="${n(cx - h * 0.035)}" y="${n(cy - h * 0.1)}" width="${n(h * 0.07)}" height="${n(h * 0.5 - sw * 0.2)}" rx="${n(h * 0.03)}" fill="${fillGrad(id)}"/>`;
+}
+
+/** Simbolo + "VISIONSMART" (ExtraBold, degradado de marca). `ancla` indica de que lado de x queda el conjunto. */
+export function logo(d: Dibujo): string {
+  const { x, y, h, ancla } = d.lay.logo;
+  const tam = h * 0.62, espaciado = tam * 0.06;
+  const wTexto = medir('VISIONSMART', 'extrabold', tam, espaciado);
+  const total = h + h * 0.22 + wTexto;
+  const x0 = ancla === 'end' ? x - total : ancla === 'middle' ? x - total / 2 : x;
+  d.defs.push(gradColores('logoTxt', coloresLogo(d.p.logo), 0));
+  return simbolo(d, x0 + h / 2, y + h / 2, h, d.p.logo) +
+    `<text x="${n(x0 + h * 1.22)}" y="${n(y + h / 2 + tam * 0.36)}" font-family="${d.fu.extrabold}" font-size="${n(tam)}" letter-spacing="${n(espaciado)}" fill="${fillGrad('logoTxt')}">VISIONSMART</text>`;
+}
+
+// ── Titulo ──────────────────────────────────────────────────────────────────────
+export function titulo(d: Dibujo, lineas: string[], tam: number): string {
+  const t = d.lay.titulo, p = d.p;
+  d.defs.push(gradColores('acento', p.acento, 0));
+  const interlineado = tam * 1.06;
+  const txt = (s: string, y: number, fill: string) => `<text x="${t.x}" y="${n(y)}" font-family="${d.fu.extrabold}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${fill}">${esc(s)}</text>`;
+  if (lineas.length === 1) {
+    const palabras = lineas[0].split(' ');
+    if (palabras.length === 1) return txt(palabras[0], t.y, p.texto);
+    const ultima = palabras.pop()!;
+    return `<text x="${t.x}" y="${n(t.y)}" font-family="${d.fu.extrabold}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${p.texto}">${esc(palabras.join(' '))} <tspan fill="${fillGrad('acento')}">${esc(ultima)}</tspan></text>`;
+  }
+  // varias lineas: las primeras en el color de texto y la ultima con el degradado de acento
+  return lineas.map((l, i) => txt(l, t.y + i * interlineado, i === lineas.length - 1 ? fillGrad('acento') : p.texto)).join('');
+}
+// ── Lista de caracteristicas ────────────────────────────────────────────────────
+function iconoSvg(d: Dibujo, id: Caracteristica['icono'], cx: number, cy: number, tam: number): string {
+  const e = d.p.icono, esc_ = tam / 24;
+  const trazos = ICONOS[id].map((t) => `<path d="${t}"/>`).join('');
+  const c = e.estilo === 'circulo' ? `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(tam / 2)}" fill="${e.relleno}" stroke="${e.borde}" stroke-width="2.4"/>` : '';
+  const lado = e.estilo === 'circulo' ? tam * 0.52 : tam * 0.7;
+  const k = lado / 24;
+  void esc_;
+  return c + `<g transform="translate(${n(cx - lado / 2)} ${n(cy - lado / 2)}) scale(${n(k)})" fill="none" stroke="${e.color}" stroke-width="${n(e.estilo === 'circulo' ? 1.7 : 1.9)}" stroke-linecap="round" stroke-linejoin="round">${trazos}</g>`;
+}
+
+export function lista(d: Dibujo, items: Caracteristica[]): string {
+  const L = d.lay.lista, p = d.p;
+  const out: string[] = [];
+  items.slice(0, L.cantidad).forEach((it, i) => {
+    const fila = L.modo === 'fila';
+    const ix = fila ? L.x + i * L.paso : L.x, iy = fila ? L.y : L.y + i * L.paso;
+    const cx = ix + L.icono / 2, cy = iy + L.icono / 2;
+    const xt = ix + L.icono + 16;
+    const anchoTexto = (fila ? L.paso - L.icono - 30 : L.ancho - L.icono - 16);
+    const lineas = it.lineas.length === 1 ? partirTexto(it.lineas[0], 'regular', L.tam, anchoTexto, fila ? 3 : 2) : it.lineas.map((s) => partirTexto(s, 'regular', L.tam, anchoTexto, 1)[0]);
+    out.push(iconoSvg(d, it.icono, cx, cy, L.icono));
+    const y0 = cy - ((lineas.length - 1) * L.tam * 1.2) / 2 + L.tam * 0.34;
+    lineas.forEach((s, j) => out.push(`<text x="${n(xt)}" y="${n(y0 + j * L.tam * 1.2)}" font-family="${d.fu.regular}" font-size="${L.tam}" fill="${p.texto}">${esc(s)}</text>`));
+  });
+  return out.join('');
+}
+
+// ── Precio ──────────────────────────────────────────────────────────────────────
+export type TextosPrecio = { principal: string; secundario: string | null };
+
+export function precio(d: Dibujo, t: TextosPrecio | null, etiqueta: string | null): string {
+  if (!t) return '';
+  const P = d.lay.precio, p = d.p;
+  d.defs.push(gradColores('precioG', p.precio.color, 0));
+  // tamano: el de la zona, sin pasar del ancho disponible (metricas reales)
+  const tam = tamParaAncho(t.principal, 'extrabold', P.ancho, P.tam, Math.round(P.tam * 0.5));
+  const xTxt = P.x;
+  const out: string[] = [];
+  const lblTam = Math.round(tam * 0.27);
+  if (p.precio.vidrio) {
+    const w = Math.max(medir(t.principal, 'extrabold', tam), etiqueta ? medir(etiqueta, 'bold', lblTam, 3) : 0) + 56;
+    const h = tam + lblTam + (t.secundario ? tam * 0.5 : 0) + 64;
+    const x = P.ancla === 'end' ? xTxt - w + 28 : xTxt - 28;
+    out.push(`<rect x="${n(x)}" y="${n(P.y - tam - lblTam - 40)}" width="${n(w)}" height="${n(h)}" rx="30" fill="#FFFFFF" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="2.5"/>`);
+  }
+  if (etiqueta) out.push(`<text x="${xTxt}" y="${n(P.y - tam * 0.98)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
+  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(t.principal)}</text>`);
+  if (t.secundario) out.push(`<text x="${xTxt}" y="${n(P.y + tam * 0.5)}" font-family="${d.fu.bold}" font-size="${Math.round(tam * 0.38)}" text-anchor="${P.ancla}" fill="${p.textoSec}">${esc(t.secundario)}</text>`);
+  return out.join('');
+}
+
+// ── Garantia ────────────────────────────────────────────────────────────────────
+export function garantia(d: Dibujo, g: Garantia): string {
+  if (!g.tiene) return '';
+  const G = d.lay.garantia, e = d.p.garantia;
+  const cx = G.x + G.w / 2;
+  const t1 = Math.round(G.h * 0.19), t2 = tamParaAncho(g.linea2, 'extrabold', G.w - 36, Math.round(G.h * 0.32), 16);
+  return `<rect x="${G.x}" y="${G.y}" width="${G.w}" height="${G.h}" rx="18" fill="${e.relleno}" stroke="${e.borde}" stroke-width="${e.estilo === 'borde' ? 2.6 : 2}"/>` +
+    `<text x="${n(cx)}" y="${n(G.y + G.h * 0.36)}" font-family="${d.fu.bold}" font-size="${t1}" letter-spacing="2" text-anchor="middle" fill="${e.textoSec}">${esc(g.linea1)}</text>` +
+    `<text x="${n(cx)}" y="${n(G.y + G.h * 0.72)}" font-family="${d.fu.extrabold}" font-size="${t2}" text-anchor="middle" fill="${e.texto}">${esc(g.linea2)}</text>`;
+}
+
+// ── Pie ─────────────────────────────────────────────────────────────────────────
+export function pie(d: Dibujo, web: string, redes: string): string {
+  const P = d.lay.pie;
+  return `<text x="${P.x}" y="${P.y}" font-family="${d.fu.regular}" font-size="${Math.round(d.W * (d.p.familia === 'editorial' ? 0.022 : 0.026))}" letter-spacing="1.5" text-anchor="${P.ancla as Ancla}" fill="${d.p.pie}">${esc(web)}  ·  ${esc(redes)}</text>`;
+}
