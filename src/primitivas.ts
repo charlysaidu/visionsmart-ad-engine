@@ -1,4 +1,5 @@
 import type { Caracteristica, Garantia } from './datos.ts';
+import { LOGO_SIMBOLO_HREF } from './logo.ts';
 import { ICONOS } from './iconos.ts';
 import type { Ancla, Fuente, Grad, Layout, Plantilla } from './tipos.ts';
 import { textoUnidades, type PromoCalculada } from './promo.ts';
@@ -150,20 +151,15 @@ export function foto(d: Dibujo, href: string | null | undefined): string {
   const f = d.lay.foto;
   if (href) return `<image href="${esc(href)}" x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" preserveAspectRatio="xMidYMax meet"/>`;
   // sin foto: el simbolo de la marca, tenue
-  return `<g opacity="0.22">${simbolo(d, f.x + f.w / 2, f.y + f.h * 0.5, Math.min(f.w, f.h) * 0.5, d.p.logo)}</g>`;
+  return `<g opacity="0.22">${simbolo(f.x + f.w / 2, f.y + f.h * 0.5, Math.min(f.w, f.h) * 0.5)}</g>`;
 }
 
 // ── Logo ────────────────────────────────────────────────────────────────────────
 function coloresLogo(v: 'claro' | 'oscuro'): string[] { return v === 'claro' ? ['#5EC4FF', '#8E7BFF', '#C264F0'] : ['#1367A4', '#4EA8DF', '#9D40CB']; }
 
-/** Simbolo de la marca (aro + punto + tallo) centrado en (cx, cy) con diametro `h`. */
-export function simbolo(d: Dibujo, cx: number, cy: number, h: number, v: 'claro' | 'oscuro'): string {
-  const id = `lg${Math.round(cx)}x${Math.round(cy)}`;
-  d.defs.push(gradColores(id, coloresLogo(v), 0));
-  const r = h / 2, sw = h * 0.1;
-  return `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r - sw / 2)}" fill="none" stroke="${fillGrad(id)}" stroke-width="${n(sw)}"/>` +
-    `<circle cx="${n(cx)}" cy="${n(cy - h * 0.1)}" r="${n(h * 0.17)}" fill="${fillGrad(id)}"/>` +
-    `<rect x="${n(cx - h * 0.035)}" y="${n(cy - h * 0.1)}" width="${n(h * 0.07)}" height="${n(h * 0.5 - sw * 0.2)}" rx="${n(h * 0.03)}" fill="${fillGrad(id)}"/>`;
+/** Simbolo de la marca: el logo ORIGINAL (PNG incrustado, src/logo.ts) centrado en (cx, cy) con diametro `h`. El aro toca los bordes de la imagen. */
+export function simbolo(cx: number, cy: number, h: number): string {
+  return `<image href="${LOGO_SIMBOLO_HREF}" x="${n(cx - h / 2)}" y="${n(cy - h / 2)}" width="${n(h)}" height="${n(h)}" preserveAspectRatio="xMidYMid meet"/>`;
 }
 
 /** Simbolo + "VISIONSMART" (ExtraBold, degradado de marca). `ancla` indica de que lado de x queda el conjunto. */
@@ -174,7 +170,7 @@ export function logo(d: Dibujo): string {
   const total = h + h * 0.22 + wTexto;
   const x0 = ancla === 'end' ? x - total : ancla === 'middle' ? x - total / 2 : x;
   d.defs.push(gradColores('logoTxt', coloresLogo(d.p.logo), 0));
-  return simbolo(d, x0 + h / 2, y + h / 2, h, d.p.logo) +
+  return simbolo(x0 + h / 2, y + h / 2, h) +
     `<text x="${n(x0 + h * 1.22)}" y="${n(y + h / 2 + tam * 0.36)}" font-family="${d.fu.extrabold}" font-size="${n(tam)}" letter-spacing="${n(espaciado)}" fill="${fillGrad('logoTxt')}">VISIONSMART</text>`;
 }
 

@@ -49,8 +49,8 @@ for (const id of IDS_PLANTILLAS) {
       assert.ok(svg.includes('CARGADOR'), 'titulo');
       assert.ok(svg.includes('Bs. 5.100') && svg.includes('DESDE'), 'precio');
       assert.ok(svg.includes('GARANTÍA') && svg.includes('6 MESES'), 'garantia');
-      assert.ok(svg.includes('visionsmart.ve') && svg.includes('@visionsmart.ve'), 'pie');
-      assert.equal((svg.match(/<image /g) ?? []).length, 1);
+      assert.ok(svg.includes('visionsmart.app') && svg.includes('@visionsmart.app'), 'pie');
+      assert.equal((svg.match(/<image /g) ?? []).length, 2, 'foto + logo original');
       assert.ok(svg.includes(FOTO));
       // todo texto con coordenadas dentro del lienzo
       for (const m of svg.matchAll(/<text x="([\d.\-]+)" y="([\d.\-]+)"/g)) {
@@ -147,7 +147,8 @@ test('nombres largos, raros o con simbolos no rompen ninguna plantilla ni format
 
 test('sin foto: no hay <image> de producto, aparece el simbolo de marca tenue; sin tasa ni garantia se omiten esos bloques', () => {
   const svg = renderSvg('black-premium', { producto: { nombre: 'Funda', precioUsd: 5, garantia: 'Sin garantía' }, tasaBs: null }, '4x5');
-  assert.ok(!svg.includes('<image'));
+  assert.ok(!svg.includes(FOTO), 'sin imagen de producto');
+  assert.equal((svg.match(/<image /g) ?? []).length, 2, 'logo del encabezado + simbolo tenue');
   assert.ok(svg.includes('opacity="0.22"'));
   assert.ok(!svg.includes('GARANTÍA') && !svg.includes('MESES'));
 });
@@ -163,7 +164,7 @@ test('caracteristicas y garantia: datos reales, sin promesas falsas', () => {
   assert.equal(garantiaDe('Sin garantía').tiene, false); assert.equal(garantiaDe(null).tiene, false);
 });
 
-test('pie = logo + visionsmart.ve + @visionsmart.ve y nada mas (sin WhatsApp, delivery ni envios)', () => {
+test('pie = logo + visionsmart.app + @visionsmart.app y nada mas (sin WhatsApp, delivery ni envios)', () => {
   for (const id of IDS_PLANTILLAS) assert.ok(!/whatsapp|delivery|env[ií]os/i.test(renderSvg(id, ctx, '4x5')));
   assert.ok(renderSvg('black-premium', { ...ctx, marca: { web: 'otra.ve', redes: '@otra' } }, '4x5').includes('otra.ve'));
 });

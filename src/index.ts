@@ -20,7 +20,7 @@ import { FORMATOS, FUENTE_JAKARTA, type ContextoAnuncio, type Formato, type Modo
 import { calcularPromo } from './promo.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '0.3.0-fase2';
+export const VERSION_MOTOR = '0.4.0';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
 export { zipPorPartes, zipEnMemoria, crc32, nombreSeguro, type EntradaZip } from './zip.ts';
@@ -47,7 +47,7 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
   const lay = layoutDe(p, formato);
   const d: P.Dibujo = { W, H, p, lay, fu: ctx.fuente ?? FUENTE_JAKARTA, defs: [] };
   const prod = ctx.producto;
-  const marca = { web: 'visionsmart.ve', redes: '@visionsmart.ve', ...(ctx.marca ?? {}) };
+  const marca = { web: 'visionsmart.app', redes: '@visionsmart.app', ...(ctx.marca ?? {}) };
 
   const { lineas, tam } = tituloEnLineas(prod.nombre, lay.titulo.ancho, lay.titulo.tamMax, lay.titulo.tamMin);
   const modo = ctx.precio ?? 'bs';
