@@ -11,8 +11,8 @@ export type PlantillaId =
   | 'black-premium' | 'pure-white' | 'blue-signature' | 'purple-edition' | 'gradient-experience'
   | 'product-spotlight' | 'tech-editorial' | 'modern-glass' | 'dynamic-tech' | 'luxury-minimal';
 
-/** Como se muestra el precio: Bs (principal), USD, ambos (Bs grande + USD pequeno debajo) o ninguno. */
-export type ModoPrecio = 'bs' | 'usd' | 'ambos' | 'ninguno';
+/** Como se muestra el precio: en bolivares, en dolares o sin precio. (Aplica a todo un lote y tambien a una imagen individual.) */
+export type ModoPrecio = 'bs' | 'usd' | 'ninguno';
 
 export type Fuente = { regular: string; bold: string; extrabold: string };
 export const FUENTE_JAKARTA: Fuente = { regular: 'Jakarta-Regular', bold: 'Jakarta-Bold', extrabold: 'Jakarta-ExtraBold' };

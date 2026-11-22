@@ -221,26 +221,23 @@ export function lista(d: Dibujo, items: Caracteristica[]): string {
 }
 
 // ── Precio ──────────────────────────────────────────────────────────────────────
-export type TextosPrecio = { principal: string; secundario: string | null };
-
-export function precio(d: Dibujo, t: TextosPrecio | null, etiqueta: string | null): string {
-  if (!t) return '';
+export function precio(d: Dibujo, texto: string | null, etiqueta: string | null): string {
+  if (!texto) return '';
   const P = d.lay.precio, p = d.p;
   d.defs.push(gradColores('precioG', p.precio.color, 0));
   // tamano: el de la zona, sin pasar del ancho disponible (metricas reales)
-  const tam = tamParaAncho(t.principal, 'extrabold', P.ancho, P.tam, Math.round(P.tam * 0.5));
+  const tam = tamParaAncho(texto, 'extrabold', P.ancho, P.tam, Math.round(P.tam * 0.5));
   const xTxt = P.x;
   const out: string[] = [];
   const lblTam = Math.round(tam * 0.27);
   if (p.precio.vidrio) {
-    const w = Math.max(medir(t.principal, 'extrabold', tam), etiqueta ? medir(etiqueta, 'bold', lblTam, 3) : 0) + 56;
-    const h = tam + lblTam + (t.secundario ? tam * 0.5 : 0) + 64;
+    const w = Math.max(medir(texto, 'extrabold', tam), etiqueta ? medir(etiqueta, 'bold', lblTam, 3) : 0) + 56;
+    const h = tam + lblTam + 64;
     const x = P.ancla === 'end' ? xTxt - w + 28 : xTxt - 28;
     out.push(`<rect x="${n(x)}" y="${n(P.y - tam - lblTam - 40)}" width="${n(w)}" height="${n(h)}" rx="30" fill="#FFFFFF" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="2.5"/>`);
   }
   if (etiqueta) out.push(`<text x="${xTxt}" y="${n(P.y - tam * 0.98)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
-  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(t.principal)}</text>`);
-  if (t.secundario) out.push(`<text x="${xTxt}" y="${n(P.y + tam * 0.5)}" font-family="${d.fu.bold}" font-size="${Math.round(tam * 0.38)}" text-anchor="${P.ancla}" fill="${p.textoSec}">${esc(t.secundario)}</text>`);
+  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(texto)}</text>`);
   return out.join('');
 }
 

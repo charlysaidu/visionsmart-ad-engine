@@ -76,23 +76,21 @@ for (const id of IDS_PLANTILLAS) {
   });
 }
 
-test('precio Bs moderado: ~65-70 % del tamano del spike (150 px) en 4x5, y dominante frente a USD/etiqueta', () => {
-  const svg = renderSvg('black-premium', { ...ctx, precio: 'ambos' }, '4x5');
+test('precio Bs moderado: ~65-70 % del tamano del spike (150 px) en 4x5 y es lo mas grande de la franja inferior', () => {
+  const svg = renderSvg('black-premium', ctx, '4x5');
   const tam = Number(/font-size="(\d+)"[^>]*fill="url\(#precioG\)"/.exec(svg)![1]);
   assert.ok(tam >= 95 && tam <= 105, `tam Bs = ${tam}`);
-  const tamUsd = Number(/font-size="(\d+)"[^>]*fill="#9AA3B5"/.exec(svg)![1]);
-  assert.ok(tam > tamUsd * 2);
-  assert.ok(svg.indexOf('Bs. 5.100') < svg.indexOf('$24.90'));
+  const tamEtiqueta = Number(/font-size="(\d+)"[^>]*>DESDE</.exec(svg)![1]);
+  assert.ok(tam > tamEtiqueta * 2.5);
 });
 
-test('modos de precio: bs / usd / ambos / ninguno (aplica igual a una plantilla individual)', () => {
+test('modos de precio: solo bs / usd / ninguno (aplica igual a una plantilla individual y a un lote)', () => {
+  assert.ok(!('ambos' in { bs: 1, usd: 1, ninguno: 1 }));
   for (const id of IDS_PLANTILLAS) {
     const bs = renderSvg(id, { ...ctx, precio: 'bs' }, '4x5');
     assert.ok(bs.includes('Bs. 5.100') && !bs.includes('$24.90'));
     const usd = renderSvg(id, { ...ctx, precio: 'usd' }, '4x5');
     assert.ok(usd.includes('$24.90') && !usd.includes('Bs.'));
-    const ambos = renderSvg(id, { ...ctx, precio: 'ambos' }, '4x5');
-    assert.ok(ambos.includes('Bs. 5.100') && ambos.includes('$24.90'));
     const ninguno = renderSvg(id, { ...ctx, precio: 'ninguno' }, '4x5');
     assert.ok(!ninguno.includes('Bs.') && !ninguno.includes('$24') && !ninguno.includes('DESDE'));
     assert.ok(ninguno.includes('6 MESES'), 'la garantia sigue');
@@ -100,10 +98,12 @@ test('modos de precio: bs / usd / ambos / ninguno (aplica igual a una plantilla 
   }
 });
 
-test('sin tasa: modo bs no inventa precio; modo ambos cae al USD', () => {
+test('sin tasa: modo bs no inventa precio; usd no necesita tasa; ninguno siempre null', () => {
   assert.equal(textosPrecio('bs', 24.9, null), null);
-  assert.deepEqual(textosPrecio('ambos', 24.9, 0), { principal: '$24.90', secundario: null });
+  assert.equal(textosPrecio('bs', 24.9, 203.456), 'Bs. 5.100');
+  assert.equal(textosPrecio('usd', 24.9, null), '$24.90');
   assert.equal(textosPrecio('usd', null, 200), null);
+  assert.equal(textosPrecio('ninguno', 24.9, 203.456), null);
   assert.ok(!renderSvg('pure-white', { ...ctx, tasaBs: null }, '4x5').includes('Bs.'));
 });
 

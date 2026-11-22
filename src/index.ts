@@ -28,12 +28,10 @@ export { layoutDe } from './layouts.ts';
 export { textoBolivares, textoDolares, redondearBs, miles, medir, tituloEnLineas, esc } from './util.ts';
 
 /** Textos de precio segun el modo elegido. null = sin precio en la imagen (modo 'ninguno' o dato faltante). */
-export function textosPrecio(modo: ModoPrecio, usd: number | null | undefined, tasa: number | null | undefined): { principal: string; secundario: string | null } | null {
-  const bs = textoBolivares(usd, tasa), d = textoDolares(usd);
+export function textosPrecio(modo: ModoPrecio, usd: number | null | undefined, tasa: number | null | undefined): string | null {
   if (modo === 'ninguno') return null;
-  if (modo === 'usd') return d ? { principal: d, secundario: null } : null;
-  if (modo === 'ambos') return bs ? { principal: bs, secundario: d } : d ? { principal: d, secundario: null } : null;
-  return bs ? { principal: bs, secundario: null } : null;   // 'bs' (por defecto)
+  if (modo === 'usd') return textoDolares(usd);
+  return textoBolivares(usd, tasa);   // 'bs' (por defecto): sin tasa valida no se inventa el precio
 }
 
 export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Formato): string {
