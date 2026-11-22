@@ -1,0 +1,12 @@
+{
+  "name": "visionsmart-ad-engine",
+  "version": "0.0.1",
+  "description": "Motor de composicion de imagenes publicitarias VisionSmart: plantilla(contexto) -> SVG. TypeScript puro, sin dependencias, sin modulos nativos.",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "node --no-warnings --test test/motor.test.ts",
+    "muestras": "node --no-warnings scripts/muestras.ts"
+  }
+}
