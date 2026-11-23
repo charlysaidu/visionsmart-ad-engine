@@ -43,7 +43,7 @@ for (const id of IDS_PLANTILLAS) for (const f of FORMATOS_IDS) {
     const { ancho: W, alto: H } = FORMATOS[f];
     assert.ok(svg.includes('OFERTA'), 'etiqueta OFERTA');
     assert.ok(svg.includes('ANTES Bs. 5.000') && svg.includes('Bs. 4.000'), 'anterior y promo en Bs');     // 24.9*200=4980->5000 ; 19.9*200=3980->4000
-    assert.ok(/<line [^>]*stroke-width="3"/.test(svg), 'linea de tachado');
+    assert.ok(/<line [^>]*stroke-width="[3-9]"/.test(svg), 'linea de tachado');
     assert.ok(svg.includes('-20%'), 'chip de descuento');
     assert.ok(svg.includes('SOLO 12 UNIDADES') && svg.includes('OFERTA VÁLIDA HASTA EL 30/11/2026'));
     assert.ok(!svg.includes('PRECIO'));

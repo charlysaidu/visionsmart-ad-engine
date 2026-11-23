@@ -20,7 +20,7 @@ import { FORMATOS, FUENTE_JAKARTA, type ContextoAnuncio, type Formato, type Modo
 import { calcularPromo } from './promo.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '0.5.0';
+export const VERSION_MOTOR = '0.6.0';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
 export { zipPorPartes, zipEnMemoria, crc32, nombreSeguro, type EntradaZip } from './zip.ts';

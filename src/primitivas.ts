@@ -227,6 +227,14 @@ export function lista(d: Dibujo, items: Caracteristica[]): string {
 }
 
 // ── Precio ──────────────────────────────────────────────────────────────────────
+/** ¿Color #RRGGBB claro? (luminancia relativa > 0.5). Lo usa el tachado del precio anterior para contrastar con el fondo de la plantilla. */
+export function esColorClaro(hex: string): boolean {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return false;
+  const v = parseInt(m[1], 16), c = [(v >> 16) & 255, (v >> 8) & 255, v & 255].map((x) => x / 255);
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] > 0.5;
+}
+
 export function precio(d: Dibujo, texto: string | null, etiqueta: string | null, anterior: string | null = null): string {
   if (!texto) return '';
   const P = d.lay.precio, p = d.p;
@@ -236,21 +244,36 @@ export function precio(d: Dibujo, texto: string | null, etiqueta: string | null,
   const xTxt = P.x;
   const out: string[] = [];
   const lblTam = Math.round(tam * 0.27);
+  // Precio anterior + etiqueta: en la MISMA linea (OFERTA ... ANTES $x) si caben en el ancho del precio; si no, OFERTA encima del anterior.
+  const tamAnt = Math.round(lblTam * 1.35), gap = Math.round(lblTam * 1.1);
+  const txtAnt = anterior ? `ANTES ${anterior}` : '';
+  const wEt = etiqueta ? medir(etiqueta, 'bold', lblTam, 3) : 0, wAnt = anterior ? medir(txtAnt, 'bold', tamAnt) : 0;
+  const juntos = !!anterior && !!etiqueta && wEt + gap + wAnt <= P.ancho;
+  const apilado = !!anterior && !!etiqueta && !juntos;
   if (p.precio.vidrio) {
-    const w = Math.max(medir(texto, 'extrabold', tam), etiqueta ? medir(etiqueta, 'bold', lblTam, 3) : 0) + 56;
-    const h = tam + lblTam + 64;
+    const w = Math.max(medir(texto, 'extrabold', tam), juntos ? wEt + gap + wAnt : Math.max(wEt, wAnt)) + 56;
+    const extra = apilado ? Math.round(tamAnt * 1.3) : 0;                                         // una linea mas arriba (OFERTA sobre ANTES)
+    const h = tam + lblTam + 64 + extra;
     const x = P.ancla === 'end' ? xTxt - w + 28 : xTxt - 28;
-    out.push(`<rect x="${n(x)}" y="${n(P.y - tam - lblTam - 40)}" width="${n(w)}" height="${n(h)}" rx="30" fill="#FFFFFF" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="2.5"/>`);
+    out.push(`<rect x="${n(x)}" y="${n(P.y - tam - lblTam - 40 - extra)}" width="${n(w)}" height="${n(h)}" rx="30" fill="#FFFFFF" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="2.5"/>`);
   }
+  const yEt = P.y - tam * 0.98;
   if (anterior) {
-    // precio anterior tachado ("ANTES Bs. 6.400") en la linea de la etiqueta; el tachado es una linea (text-decoration no es fiable en react-native-svg)
-    const txtAnt = `ANTES ${anterior}`, tamAnt = Math.round(lblTam * 1.2), yAnt = P.y - tam * 0.98;
-    const w = medir(txtAnt, 'bold', tamAnt);
-    const x1 = P.ancla === 'end' ? xTxt - w : P.ancla === 'middle' ? xTxt - w / 2 : xTxt;
-    out.push(`<text x="${xTxt}" y="${n(yAnt)}" font-family="${d.fu.bold}" font-size="${tamAnt}" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(txtAnt)}</text>`);
-    out.push(`<line x1="${n(x1)}" y1="${n(yAnt - tamAnt * 0.32)}" x2="${n(x1 + w)}" y2="${n(yAnt - tamAnt * 0.32)}" stroke="${p.precio.desde}" stroke-width="3" stroke-linecap="round"/>`);
-  } else if (etiqueta) out.push(`<text x="${xTxt}" y="${n(P.y - tam * 0.98)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
-  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(texto)}</text>`);
+    // precio anterior tachado ("ANTES Bs. 6.400"); el tachado es una linea (text-decoration no es fiable en react-native-svg)
+    // Legibilidad por fondo: fondo OSCURO (texto claro) -> texto y tachado blancos; fondo CLARO -> del color de texto oscuro de la plantilla.
+    const yAnt = yEt;
+    const totalW = juntos ? wEt + gap + wAnt : wAnt;
+    const x0 = P.ancla === 'end' ? xTxt - totalW : P.ancla === 'middle' ? xTxt - totalW / 2 : xTxt;
+    const xAnt = juntos ? x0 + wEt + gap : P.ancla === 'end' ? xTxt - wAnt : P.ancla === 'middle' ? xTxt - wAnt / 2 : xTxt;
+    const colorAnt = esColorClaro(p.texto) ? '#FFFFFF' : p.texto, opAnt = 0.88;
+    const grosor = Math.max(3, Math.round(tamAnt * 0.11));
+    out.push(`<text x="${n(xAnt)}" y="${n(yAnt)}" font-family="${d.fu.bold}" font-size="${tamAnt}" text-anchor="start" fill="${colorAnt}" fill-opacity="${opAnt}">${esc(txtAnt)}</text>`);
+    out.push(`<line x1="${n(xAnt - 4)}" y1="${n(yAnt - tamAnt * 0.32)}" x2="${n(xAnt + wAnt + 4)}" y2="${n(yAnt - tamAnt * 0.32)}" stroke="${colorAnt}" stroke-opacity="${opAnt}" stroke-width="${grosor}" stroke-linecap="round"/>`);
+    if (etiqueta) {
+      const xEt = juntos ? x0 : xAnt, yEtq = juntos ? yAnt : yAnt - tamAnt * 1.3;                 // apilada: encima del anterior, nunca sobre el precio ni el tachado
+      out.push(`<text x="${n(xEt)}" y="${n(yEtq)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="start" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
+    }
+  } else if (etiqueta) out.push(`<text x="${xTxt}" y="${n(yEt)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(texto)}</text>`);
   return out.join('');
 }
 
@@ -272,7 +295,9 @@ export function promoExtras(d: Dibujo, promo: PromoCalculada): string {
   if (promo.unidades != null) chip(textoUnidades(promo.unidades), Math.round(d.W * 0.026), 'rgba(0,0,0,0.62)', '#FFFFFF');
   if (promo.vigencia) {
     const P = d.lay.pie, tam = Math.round(d.W * (d.p.familia === 'editorial' ? 0.022 : 0.026));
-    out.push(`<text x="${P.x}" y="${n(P.y - d.W * 0.034)}" font-family="${d.fu.bold}" font-size="${tam}" letter-spacing="1" text-anchor="${P.ancla}" fill="${d.p.texto}">${esc(promo.vigencia)}</text>`);
+    // por defecto justo sobre el pie; nunca pegada al precio (si el pie queda muy cerca del precio, baja lo justo para despejarlo)
+    const yVig = Math.max(P.y - d.W * 0.034, d.lay.precio.y + 16 + tam * 0.74);
+    out.push(`<text x="${P.x}" y="${n(yVig)}" font-family="${d.fu.bold}" font-size="${tam}" letter-spacing="1" text-anchor="${P.ancla}" fill="${d.p.texto}">${esc(promo.vigencia)}</text>`);
   }
   return out.join('');
 }

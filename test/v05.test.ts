@@ -5,7 +5,7 @@ import { IDS_PLANTILLAS, renderSvg, VERSION_MOTOR } from '../src/index.ts';
 
 const prod = { nombre: 'Cargador Rapido 25W', precioUsd: 15, fotoHref: null, garantia: '3 meses', marcas: ['Samsung'] } as any;
 
-test('version del motor 0.5.0', () => assert.equal(VERSION_MOTOR, '0.5.0'));
+test('version del motor >= 0.5.0', () => assert.match(VERSION_MOTOR, /^0\.(5|6)\.\d+/));
 
 for (const id of IDS_PLANTILLAS) for (const f of ['4x5', '1x1', '9x16'] as const) {
   test(`${id} ${f}: PRECIO en Bs y USD, nada en Ninguno, nunca DESDE`, () => {
