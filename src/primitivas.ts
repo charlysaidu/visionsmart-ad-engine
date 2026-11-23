@@ -116,7 +116,15 @@ function adornoAureola(d: Dibujo): string {
   return `<ellipse cx="${n(f.x + f.w / 2)}" cy="${n(f.y + f.h * 0.5)}" rx="${n(f.w * 0.85)}" ry="${n(f.h * 0.7)}" fill="${fillGrad('aureola')}"/>`;
 }
 
+/** Filete fino con el degradado de marca (azul -> morado) bajo el encabezado: la linea de la plantilla minimalista. */
+function adornoFilete(d: Dibujo): string {
+  d.defs.push(gradColores('filete', d.p.acento, 0));
+  const y = d.lay.logo.y + d.lay.logo.h + 26;
+  return `<rect x="60" y="${n(y)}" width="${d.W - 120}" height="3" rx="1.5" fill="${fillGrad('filete')}"/>`;
+}
+
 const ADORNOS: Record<string, (d: Dibujo) => string> = {
+  filete: adornoFilete,
   niebla: adornoNiebla, puntos: adornoPuntos, rayos: adornoRayos, spot: adornoSpot, neon: adornoNeon,
   panel: adornoPanel, vidrio: adornoVidrio, aros: adornoAros, estrellas: adornoEstrellas, aureola: adornoAureola,
 };
@@ -179,12 +187,13 @@ export function titulo(d: Dibujo, lineas: string[], tam: number): string {
   const t = d.lay.titulo, p = d.p;
   d.defs.push(gradColores('acento', p.acento, 0));
   const interlineado = tam * 1.06;
-  const txt = (s: string, y: number, fill: string) => `<text x="${t.x}" y="${n(y)}" font-family="${d.fu.extrabold}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${fill}">${esc(s)}</text>`;
+  const fam = p.titulo.peso === 'bold' ? d.fu.bold : d.fu.extrabold;
+  const txt = (s: string, y: number, fill: string) => `<text x="${t.x}" y="${n(y)}" font-family="${fam}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${fill}">${esc(s)}</text>`;
   if (lineas.length === 1) {
     const palabras = lineas[0].split(' ');
     if (palabras.length === 1) return txt(palabras[0], t.y, p.texto);
     const ultima = palabras.pop()!;
-    return `<text x="${t.x}" y="${n(t.y)}" font-family="${d.fu.extrabold}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${p.texto}">${esc(palabras.join(' '))} <tspan fill="${fillGrad('acento')}">${esc(ultima)}</tspan></text>`;
+    return `<text x="${t.x}" y="${n(t.y)}" font-family="${fam}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${p.texto}">${esc(palabras.join(' '))} <tspan fill="${fillGrad('acento')}">${esc(ultima)}</tspan></text>`;
   }
   // varias lineas: las primeras en el color de texto y la ultima con el degradado de acento
   return lineas.map((l, i) => txt(l, t.y + i * interlineado, i === lineas.length - 1 ? fillGrad('acento') : p.texto)).join('');
@@ -274,7 +283,8 @@ export function garantia(d: Dibujo, g: Garantia): string {
   const G = d.lay.garantia, e = d.p.garantia;
   const cx = G.x + G.w / 2;
   const t1 = Math.round(G.h * 0.19), t2 = tamParaAncho(g.linea2, 'extrabold', G.w - 36, Math.round(G.h * 0.32), 16);
-  return `<rect x="${G.x}" y="${G.y}" width="${G.w}" height="${G.h}" rx="18" fill="${e.relleno}" stroke="${e.borde}" stroke-width="${e.estilo === 'borde' ? 2.6 : 2}"/>` +
+  if (e.degradado) d.defs.push(gradColores('garG', e.degradado, 0));
+  return `<rect x="${G.x}" y="${G.y}" width="${G.w}" height="${G.h}" rx="18" fill="${e.degradado ? fillGrad('garG') : e.relleno}" stroke="${e.borde}" stroke-width="${e.estilo === 'borde' ? 2.6 : 2}"/>` +
     `<text x="${n(cx)}" y="${n(G.y + G.h * 0.36)}" font-family="${d.fu.bold}" font-size="${t1}" letter-spacing="2" text-anchor="middle" fill="${e.textoSec}">${esc(g.linea1)}</text>` +
     `<text x="${n(cx)}" y="${n(G.y + G.h * 0.72)}" font-family="${d.fu.extrabold}" font-size="${t2}" text-anchor="middle" fill="${e.texto}">${esc(g.linea2)}</text>`;
 }

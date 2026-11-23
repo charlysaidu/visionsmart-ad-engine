@@ -47,7 +47,7 @@ for (const id of IDS_PLANTILLAS) {
       // contenido: marca, titulo, precio, garantia, pie, foto
       assert.ok(svg.includes('VISIONSMART'), 'logo');
       assert.ok(svg.includes('CARGADOR'), 'titulo');
-      assert.ok(svg.includes('Bs. 5.100') && svg.includes('DESDE'), 'precio');
+      assert.ok(svg.includes('Bs. 5.100') && svg.includes('PRECIO'), 'precio');
       assert.ok(svg.includes('GARANTÍA') && svg.includes('6 MESES'), 'garantia');
       assert.ok(svg.includes('visionsmart.app') && svg.includes('@visionsmart.app'), 'pie');
       assert.equal((svg.match(/<image /g) ?? []).length, 2, 'foto + logo original');
@@ -80,7 +80,7 @@ test('precio Bs moderado: ~65-70 % del tamano del spike (150 px) en 4x5 y es lo 
   const svg = renderSvg('black-premium', ctx, '4x5');
   const tam = Number(/font-size="(\d+)"[^>]*fill="url\(#precioG\)"/.exec(svg)![1]);
   assert.ok(tam >= 95 && tam <= 105, `tam Bs = ${tam}`);
-  const tamEtiqueta = Number(/font-size="(\d+)"[^>]*>DESDE</.exec(svg)![1]);
+  const tamEtiqueta = Number(/font-size="(\d+)"[^>]*>PRECIO</.exec(svg)![1]);
   assert.ok(tam > tamEtiqueta * 2.5);
 });
 
@@ -92,7 +92,7 @@ test('modos de precio: solo bs / usd / ninguno (aplica igual a una plantilla ind
     const usd = renderSvg(id, { ...ctx, precio: 'usd' }, '4x5');
     assert.ok(usd.includes('$24.90') && !usd.includes('Bs.'));
     const ninguno = renderSvg(id, { ...ctx, precio: 'ninguno' }, '4x5');
-    assert.ok(!ninguno.includes('Bs.') && !ninguno.includes('$24') && !ninguno.includes('DESDE'));
+    assert.ok(!ninguno.includes('Bs.') && !ninguno.includes('$24') && !ninguno.includes('PRECIO'));
     assert.ok(ninguno.includes('6 MESES'), 'la garantia sigue');
     assert.equal(renderSvg(id, ctx, '4x5'), bs, 'por defecto = bs');
   }

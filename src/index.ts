@@ -20,7 +20,7 @@ import { FORMATOS, FUENTE_JAKARTA, type ContextoAnuncio, type Formato, type Modo
 import { calcularPromo } from './promo.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '0.4.0';
+export const VERSION_MOTOR = '0.5.0';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
 export { zipPorPartes, zipEnMemoria, crc32, nombreSeguro, type EntradaZip } from './zip.ts';
@@ -55,7 +55,7 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
   // en promocion el precio grande es el promocional y el anterior sale tachado; la etiqueta pasa a "OFERTA"
   const txtPrecio = textosPrecio(modo, promo ? promo.precioUsd : prod.precioUsd, ctx.tasaBs);
   const txtAnterior = promo && promo.anteriorUsd != null && txtPrecio ? textosPrecio(modo, promo.anteriorUsd, ctx.tasaBs) : null;
-  const etiqueta = ctx.etiquetaPrecio === undefined ? (promo ? 'OFERTA' : 'DESDE') : ctx.etiquetaPrecio;
+  const etiqueta = ctx.etiquetaPrecio === undefined ? (promo ? 'OFERTA' : 'PRECIO') : ctx.etiquetaPrecio;
 
   // el orden de dibujo es el orden de las capas: fondo -> adornos -> (vidrio) -> podio -> foto -> textos -> logo/pie
   const cuerpo = [

@@ -46,7 +46,7 @@ for (const id of IDS_PLANTILLAS) for (const f of FORMATOS_IDS) {
     assert.ok(/<line [^>]*stroke-width="3"/.test(svg), 'linea de tachado');
     assert.ok(svg.includes('-20%'), 'chip de descuento');
     assert.ok(svg.includes('SOLO 12 UNIDADES') && svg.includes('OFERTA VÁLIDA HASTA EL 30/11/2026'));
-    assert.ok(!svg.includes('DESDE'));
+    assert.ok(!svg.includes('PRECIO'));
     assert.ok(!/NaN|undefined|Infinity/.test(svg));
     for (const m of svg.matchAll(/<rect x="([\d.\-]+)" y="([\d.\-]+)" width="([\d.\-]+)" height="([\d.\-]+)" rx/g)) {
       assert.ok(Number(m[1]) >= -1 && Number(m[2]) >= -1 && Number(m[1]) + Number(m[3]) <= W + 1 && Number(m[2]) + Number(m[4]) <= H + 1, `rect fuera: ${m[0]}`);
@@ -69,7 +69,7 @@ test('promo con los 3 modos de precio y sin datos opcionales', () => {
   const solo = renderSvg('pure-white', { ...ctx, promo: { activa: true } }, '4x5');
   assert.ok(solo.includes('OFERTA') && solo.includes('Bs. 5.000') && !solo.includes('ANTES') && !solo.includes('SOLO'));
   const normal = renderSvg('pure-white', ctx, '4x5');
-  assert.ok(normal.includes('DESDE') && !normal.includes('OFERTA'), 'sin promo todo queda como antes');
+  assert.ok(normal.includes('PRECIO') && !normal.includes('OFERTA'), 'sin promo todo queda como antes');
 });
 
 // ── Reparto de plantillas ──────────────────────────────────────────────────────

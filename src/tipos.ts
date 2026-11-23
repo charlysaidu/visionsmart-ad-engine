@@ -24,7 +24,7 @@ export type ContextoAnuncio = {
   tasaBs: number | null;
   /** Por defecto 'bs'. */
   precio?: ModoPrecio;
-  /** Texto superior del precio (por defecto "DESDE"). */
+  /** Texto superior del precio (por defecto "PRECIO"). */
   etiquetaPrecio?: string | null;
   /** Modo promocion (precio anterior tachado, % de descuento, unidades limitadas, vigencia). */
   promo?: DatosPromo | null;
@@ -48,10 +48,10 @@ export type Plantilla = {
   textoSec: string;
   /** Colores del degradado de acento (izq->der): linea 2 del titulo, trazos, etc. */
   acento: string[];
-  titulo: { ancla: 'start' | 'end' };
+  titulo: { ancla: 'start' | 'end'; peso?: 'bold' };       // peso: por defecto ExtraBold
   icono: { estilo: 'circulo' | 'linea'; color: string; relleno: string; borde: string };
   precio: { color: string[]; desde: string; vidrio?: boolean };
-  garantia: { estilo: 'borde' | 'relleno'; borde: string; relleno: string; texto: string; textoSec: string };
+  garantia: { estilo: 'borde' | 'relleno'; borde: string; relleno: string; texto: string; textoSec: string; degradado?: string[] };
   podio: { tipo: 'disco' | 'cilindro' | 'ninguno'; tapa: string[]; cuerpo: string[]; borde: string; brillo: string };
   halo?: { color: string; opacidad: number };
   adornos: string[];
