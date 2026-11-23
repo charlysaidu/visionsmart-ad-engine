@@ -1,3 +1,4 @@
+import type { TemaCtx } from './temas/_base.ts';
 import type { DatosProducto } from './datos.ts';
 import type { DatosPromo } from './promo.ts';
 
@@ -28,6 +29,8 @@ export type ContextoAnuncio = {
   etiquetaPrecio?: string | null;
   /** Modo promocion (precio anterior tachado, % de descuento, unidades limitadas, vigencia). */
   promo?: DatosPromo | null;
+  /** Tema visual (capa decorativa sobre la plantilla). null / ausente = sin tema (salida identica a la de siempre). */
+  tema?: TemaCtx | null;
   marca?: { web?: string; redes?: string };
   fuente?: Fuente;
 };

@@ -244,10 +244,17 @@ export function precio(d: Dibujo, texto: string | null, etiqueta: string | null,
   const xTxt = P.x;
   const out: string[] = [];
   const lblTam = Math.round(tam * 0.27);
+  let lblEt = lblTam;                       // tamano de la ETIQUETA: igual que siempre salvo etiquetas tematicas largas (> 12 letras), que se achican hasta caber (junto al anterior si se puede)
   // Precio anterior + etiqueta: en la MISMA linea (OFERTA ... ANTES $x) si caben en el ancho del precio; si no, OFERTA encima del anterior.
   const tamAnt = Math.round(lblTam * 1.35), gap = Math.round(lblTam * 1.1);
   const txtAnt = anterior ? `ANTES ${anterior}` : '';
-  const wEt = etiqueta ? medir(etiqueta, 'bold', lblTam, 3) : 0, wAnt = anterior ? medir(txtAnt, 'bold', tamAnt) : 0;
+  const wAnt = anterior ? medir(txtAnt, 'bold', tamAnt) : 0;
+  if (etiqueta && etiqueta.length > 12) {
+    const solo = (s0: number) => { let s = s0; while (s > 11 && medir(etiqueta, 'bold', s, 3) > P.ancho) s--; return s; };
+    lblEt = solo(lblTam);
+    if (anterior) { const tope = P.ancho - gap - wAnt; let s = lblEt; while (s > 16 && medir(etiqueta, 'bold', s, 3) > tope) s--; if (s >= 16 && medir(etiqueta, 'bold', s, 3) <= tope) lblEt = s; }      // junto al anterior solo si queda legible (>= 16 px); si no, se apila encima
+  }
+  const wEt = etiqueta ? medir(etiqueta, 'bold', lblEt, 3) : 0;
   const juntos = !!anterior && !!etiqueta && wEt + gap + wAnt <= P.ancho;
   const apilado = !!anterior && !!etiqueta && !juntos;
   if (p.precio.vidrio) {
@@ -271,9 +278,9 @@ export function precio(d: Dibujo, texto: string | null, etiqueta: string | null,
     out.push(`<line x1="${n(xAnt - 4)}" y1="${n(yAnt - tamAnt * 0.32)}" x2="${n(xAnt + wAnt + 4)}" y2="${n(yAnt - tamAnt * 0.32)}" stroke="${colorAnt}" stroke-opacity="${opAnt}" stroke-width="${grosor}" stroke-linecap="round"/>`);
     if (etiqueta) {
       const xEt = juntos ? x0 : xAnt, yEtq = juntos ? yAnt : yAnt - tamAnt * 1.3;                 // apilada: encima del anterior, nunca sobre el precio ni el tachado
-      out.push(`<text x="${n(xEt)}" y="${n(yEtq)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="start" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
+      out.push(`<text x="${n(xEt)}" y="${n(yEtq)}" font-family="${d.fu.bold}" font-size="${lblEt}" letter-spacing="3" text-anchor="start" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
     }
-  } else if (etiqueta) out.push(`<text x="${xTxt}" y="${n(yEt)}" font-family="${d.fu.bold}" font-size="${lblTam}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(texto)}</text>`);
+  } else if (etiqueta) out.push(`<text x="${xTxt}" y="${n(yEt)}" font-family="${d.fu.bold}" font-size="${lblEt}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(texto)}</text>`);
   return out.join('');
 }
 

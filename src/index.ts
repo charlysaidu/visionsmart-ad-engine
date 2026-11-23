@@ -18,11 +18,13 @@ import { PLANTILLAS, IDS_PLANTILLAS } from './plantillas.ts';
 import * as P from './primitivas.ts';
 import { FORMATOS, FUENTE_JAKARTA, type ContextoAnuncio, type Formato, type ModoPrecio, type PlantillaId } from './tipos.ts';
 import { calcularPromo } from './promo.ts';
+import { capaDeTema, etiquetaDeTema } from './temas/index.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '0.6.0';
+export const VERSION_MOTOR = '0.7.0';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
+export { TEMAS, IDS_TEMAS, INTENSIDADES, ETIQUETAS_PROMO_NAVIDAD, zonasProtegidas, capaDeTema, hashSemilla, intersecta, type TemaCtx, type IdTema, type Intensidad, type ElementoTema, type Caja, type CapaTema, type ZonaProtegida, type DefinicionTema } from './temas/index.ts';
 export { zipPorPartes, zipEnMemoria, crc32, nombreSeguro, type EntradaZip } from './zip.ts';
 export { FORMATOS, FUENTE_JAKARTA, PLANTILLAS, IDS_PLANTILLAS };
 export type { ContextoAnuncio, Formato, ModoPrecio, PlantillaId, Fuente, Plantilla, Layout } from './tipos.ts';
@@ -55,7 +57,9 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
   // en promocion el precio grande es el promocional y el anterior sale tachado; la etiqueta pasa a "OFERTA"
   const txtPrecio = textosPrecio(modo, promo ? promo.precioUsd : prod.precioUsd, ctx.tasaBs);
   const txtAnterior = promo && promo.anteriorUsd != null && txtPrecio ? textosPrecio(modo, promo.anteriorUsd, ctx.tasaBs) : null;
-  const etiqueta = ctx.etiquetaPrecio === undefined ? (promo ? 'OFERTA' : 'PRECIO') : ctx.etiquetaPrecio;
+  const tema = ctx.tema && ctx.tema.id ? ctx.tema : null;                          // sin tema: la salida es IDENTICA a la de siempre
+  let etiqueta = ctx.etiquetaPrecio === undefined ? (promo ? 'OFERTA' : 'PRECIO') : ctx.etiquetaPrecio;
+  if (tema && promo) etiqueta = etiquetaDeTema(tema, id, etiqueta);               // solo cambia el TEXTO de la etiqueta de oferta (no precios ni calculos)
 
   // el orden de dibujo es el orden de las capas: fondo -> adornos -> (vidrio) -> podio -> foto -> textos -> logo/pie
   const cuerpo = [
@@ -73,5 +77,7 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
     P.pie(d, marca.web, marca.redes),
   ].join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${d.defs.join('')}</defs>${cuerpo}</svg>`;
+  // el tema es una capa decorativa SOBRE la plantilla ya dibujada (nunca dentro de las zonas protegidas)
+  const capa = tema ? (capaDeTema(d, tema, id, !!promo)?.svg ?? '') : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${d.defs.join('')}</defs>${cuerpo}${capa}</svg>`;
 }

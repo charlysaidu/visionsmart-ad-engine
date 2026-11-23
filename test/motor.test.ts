@@ -191,7 +191,8 @@ test('fuentes incrustadas: las 3 TTF van como @font-face base64 SOLO en la varia
 
 test('el nucleo no usa APIs de plataforma (Intl, toLocaleString, DOM)', async () => {
   const { readFileSync, readdirSync } = await import('node:fs');
-  for (const f of readdirSync(new URL('../src/', import.meta.url))) {
+  const archivos = (dir: string): string[] => readdirSync(new URL(`../src/${dir}`, import.meta.url), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? archivos(`${dir}${e.name}/`) : [`${dir}${e.name}`]));
+  for (const f of archivos('')) {
     if (f === 'incrustadas.ts' || f === 'metricas.ts') continue;
     const src = readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     assert.ok(!/\bIntl\b|toLocaleString\(|document\.|window\.|require\(|process\./.test(src), `${f} usa una API de plataforma`);
