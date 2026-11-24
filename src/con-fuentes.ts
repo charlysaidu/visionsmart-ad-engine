@@ -12,3 +12,11 @@ export function renderSvgConFuentes(id: PlantillaId, ctx: ContextoAnuncio, forma
   return svg.slice(0, i) + cssFuentesIncrustadas() + svg.slice(i);
 }
 export { cssFuentesIncrustadas } from './incrustadas.ts';
+
+// ── Catalogo PDF: las mismas fuentes incrustadas para portada / cabecera / pie (Chromium/Electron) ──
+import { renderPortada, renderCabecera, renderPie, type DatosPortada, type DatosCabecera, type DatosPie, type TamanoPagina, type PorPagina } from './catalogo/index.ts';
+/** Inserta las 3 fuentes Plus Jakarta (data URI) justo despues de la etiqueta <svg ...>. */
+export function incrustarFuentesSvg(svg: string): string { const i = svg.indexOf('>') + 1; return svg.slice(0, i) + cssFuentesIncrustadas() + svg.slice(i); }
+export const renderPortadaConFuentes = (d: DatosPortada, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderPortada(d, t, p));
+export const renderCabeceraConFuentes = (d: DatosCabecera, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderCabecera(d, t, p));
+export const renderPieConFuentes = (d: DatosPie, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderPie(d, t, p));

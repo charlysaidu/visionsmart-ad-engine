@@ -13,7 +13,7 @@ const dibujo = (id: any, f: Formato): Dibujo => { const p = PLANTILLAS[id], { an
 const PROMO = { activa: true, precioPromoUsd: 12.85, precioAnteriorUsd: 15, unidades: 8, vigenciaISO: '2026-12-31' };
 
 test('version 0.7.0 y registro de temas', () => {
-  assert.equal(VERSION_MOTOR, '0.7.0');
+  assert.match(VERSION_MOTOR, /^0\.[7-9]\.\d+/);
   assert.deepEqual(IDS_TEMAS, ['navidad']); assert.equal(TEMAS.navidad.nombre, 'Navidad VisionSmart');
 });
 

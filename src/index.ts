@@ -21,10 +21,11 @@ import { calcularPromo } from './promo.ts';
 import { capaDeTema, etiquetaDeTema } from './temas/index.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '0.7.0';
+export const VERSION_MOTOR = '0.8.0';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
 export { TEMAS, IDS_TEMAS, INTENSIDADES, ETIQUETAS_PROMO_NAVIDAD, zonasProtegidas, capaDeTema, hashSemilla, intersecta, type TemaCtx, type IdTema, type Intensidad, type ElementoTema, type Caja, type CapaTema, type ZonaProtegida, type DefinicionTema } from './temas/index.ts';
+export * from './catalogo/index.ts';
 export { zipPorPartes, zipEnMemoria, crc32, nombreSeguro, type EntradaZip } from './zip.ts';
 export { FORMATOS, FUENTE_JAKARTA, PLANTILLAS, IDS_PLANTILLAS };
 export type { ContextoAnuncio, Formato, ModoPrecio, PlantillaId, Fuente, Plantilla, Layout } from './tipos.ts';
