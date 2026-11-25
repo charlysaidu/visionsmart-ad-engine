@@ -88,11 +88,11 @@ test('separador de categoria: nombres largos caben; y la Navidad no invade las z
 });
 
 // ── pie translucido ──
-test('pie translucido: franja 810 × 120 SIN fondo opaco (degradado oscuro de 0 a 0,78 de opacidad)', () => {
+test('pie translucido: franja 810 × 120 SIN fondo opaco (degradado oscuro de 0 a 0,86 de opacidad)', () => {
   const s = renderPieBorde({ pagina: 6, total: 7, fechaPrecios: '22 nov 2026' });
   assert.equal(ancho(s), 1620); assert.equal(alto(s), 240); assert.equal(vb(s), `0 0 810 ${PIE_BORDE_ALTO}`);
   const rects = [...s.matchAll(/<rect[^>]*>/g)].map((m) => m[0]); assert.equal(rects.length, 1, 'un solo rectangulo: el degradado'); assert.ok(/fill="url\(#bpieSombra\)"/.test(rects[0]) && /width="810" height="120"/.test(rects[0]));
-  const ops = [...s.matchAll(/stop-opacity="([\d.]+)"/g)].map((m) => Number(m[1])); assert.deepEqual(ops, [0, 0.34, 0.78], 'transparente arriba, oscuro sutil abajo'); assert.ok(ops.every((v, i) => i === 0 || v > ops[i - 1]));
+  const ops = [...s.matchAll(/stop-opacity="([\d.]+)"/g)].map((m) => Number(m[1])); assert.deepEqual(ops, [0, 0.46, 0.86], 'transparente arriba, oscuro sutil abajo'); assert.ok(ops.every((v, i) => i === 0 || v > ops[i - 1]));
   assert.ok(!/<(image|circle|path)/.test(s) && !/background/i.test(s), 'nada mas que el degradado y el texto');
 });
 test('pie: numero «6 / 7», fecha de precios y enlaces; sin total solo el numero; sin fecha no hay linea', () => {

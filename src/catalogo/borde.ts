@@ -29,7 +29,7 @@ export const PIE_BORDE_ALTO = 120;
 export const PX_POR_PT_BORDE = 2;
 export const pxBorde = (pt: number): number => Math.round(pt * PX_POR_PT_BORDE);
 
-export const COLORES_BORDE = { fondo: '#050507', fondoMedio: '#0A0C11', texto: '#FFFFFF', gris: '#A9B2C6', grisClaro: '#7F8AA3', azul: COLORES_CATALOGO.azul, celeste: COLORES_CATALOGO.celeste, morado: COLORES_CATALOGO.morado } as const;
+export const COLORES_BORDE = { fondo: '#050507', fondoMedio: '#0A0C11', texto: '#FFFFFF', gris: '#A9B2C6', claro: '#E3E8F2', grisClaro: '#7F8AA3', azul: COLORES_CATALOGO.azul, celeste: COLORES_CATALOGO.celeste, morado: COLORES_CATALOGO.morado } as const;
 const MARCA = [COLORES_BORDE.azul, COLORES_BORDE.celeste, COLORES_BORDE.morado];
 const F = FUENTE_JAKARTA;
 
@@ -145,10 +145,10 @@ function pieInterno(datos: DatosPieBorde) {
   const pag = Math.max(1, Math.round(Number(datos.pagina) || 1)), total = Number(datos.total) > 0 ? Math.max(pag, Math.round(Number(datos.total))) : 0;
   const num = total ? `${pag} / ${total}` : String(pag);
   const fecha = datos.fechaPrecios ? `Precios vigentes al ${datos.fechaPrecios}` : '';
-  const defs = `<linearGradient id="bpieSombra" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"/><stop offset="0.5" stop-color="#000000" stop-opacity="0.34"/><stop offset="1" stop-color="#000000" stop-opacity="0.78"/></linearGradient>`;
+  const defs = `<linearGradient id="bpieSombra" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"/><stop offset="0.5" stop-color="#000000" stop-opacity="0.46"/><stop offset="1" stop-color="#000000" stop-opacity="0.86"/></linearGradient>`;
   let cuerpo = `<rect x="0" y="0" width="${n(W)}" height="${n(H)}" fill="url(#bpieSombra)"/>` +
     texto(MX_PIE, yEnlaces, TAM_ENLACES, F.regular, COLORES_BORDE.texto, linea) + texto(W - MX_PIE, yNum, TAM_NUM, F.extrabold, COLORES_BORDE.texto, num, 'end');
-  if (fecha) cuerpo += texto(MX_PIE, yFecha, TAM_FECHA, F.bold, COLORES_BORDE.gris, fecha);
+  if (fecha) cuerpo += texto(MX_PIE, yFecha, TAM_FECHA, F.bold, COLORES_BORDE.claro, fecha);
   return { defs, cuerpo, W, H, enlaces: { sitio: { x: MX_PIE, y: yEnlaces - TAM_ENLACES, w: wSitio, h: TAM_ENLACES * 1.35 }, instagram: { x: MX_PIE + wSep, y: yEnlaces - TAM_ENLACES, w: wInst, h: TAM_ENLACES * 1.35 } } as Record<'sitio' | 'instagram', Rect> };
 }
 /** Pie TRANSLUCIDO (sin fondo opaco): rasterizar con transparencia y poner sobre la parte baja de la imagen (paginaBorde().pie). */
