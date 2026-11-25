@@ -7,8 +7,8 @@
  *
  * PIEZAS (SVG):
  *   · PORTADA y SEPARADOR de categoria: hoja completa, fondo OSCURO de marca (sin banda blanca). Opacos.
- *   · PIE: una franja TRANSLUCIDA (degradado oscuro sutil, tipo «pie de cine») que va ENCIMA de la parte baja de la imagen con los enlaces, la fecha de los precios
- *     y el numero de pagina («6 / 7»). El SVG NO tiene fondo opaco: hay que rasterizarlo con transparencia (PNG con canal alfa) y ponerlo sobre la imagen.
+ *   · PIE: una franja TRANSLUCIDA (degradado oscuro sutil, tipo «pie de cine») que va ENCIMA de la parte baja de la imagen con la fecha de los precios
+ *     y el numero de pagina («6 / 7»). NO repite el sitio ni Instagram: las imagenes del Generador ya los traen en su propio pie (los enlaces clicables del PDF van en la portada). El SVG NO tiene fondo opaco: hay que rasterizarlo con transparencia (PNG con canal alfa) y ponerlo sobre la imagen.
  *   · TAMAÑO DEL SVG: viewBox en pt de la pagina y width/height en PIXELES a 2 px por pt (portada 1620 × 2025; pie 1620 × 240): es el tamaño al que se rasteriza.
  * IMAGENES QUE NO SON 4:5 (1:1, 9:16): «cubrir» (rectCubrir): se agrandan hasta llenar la hoja y se recorta lo que sobra, centradas; nunca hay bandas.
  * FUENTES: igual que 0.8.0 (Jakarta-*; Sistema PC usa las variantes ...ConFuentes de con-fuentes.ts).
@@ -102,9 +102,16 @@ function portadaInterno(datos: DatosPortadaBorde) {
     { nombre: 'pie', caja: { x: cx - wPie / 2 - 10, y: yPie - 20, w: wPie + 20, h: 32 } },
     { nombre: 'barra-superior', caja: { x: 0, y: 0, w: W, h: 18 } }, { nombre: 'barra-inferior', caja: { x: 0, y: H - 18, w: W, h: 18 } },
   ];
-  return { defs: fo.defs + L.defs + gradColores('bpAcento', MARCA, 0), cuerpo, zonas, W, H };
+  const wSitio = medir(TEXTO_SITIO, 'regular', tamPie), wSep = medir(`${TEXTO_SITIO}${SEPARADOR_PIE}`, 'regular', tamPie), wInst = medir(TEXTO_INSTAGRAM, 'regular', tamPie), x0 = cx - wPie / 2;
+  const enlaces: Record<'sitio' | 'instagram', Rect> = { sitio: { x: x0, y: yPie - tamPie, w: wSitio, h: tamPie * 1.35 }, instagram: { x: x0 + wSep, y: yPie - tamPie, w: wInst, h: tamPie * 1.35 } };
+  return { defs: fo.defs + L.defs + gradColores('bpAcento', MARCA, 0), cuerpo, zonas, W, H, enlaces };
 }
 export const portadaBordeZonas = (datos: DatosPortadaBorde): { nombre: string; caja: Caja }[] => portadaInterno(datos).zonas;
+/** Rectangulos (pt, en coordenadas de la PAGINA) de «visionsmart.app» y «@visionsmart.app» del pie de la PORTADA, para las anotaciones de enlace del PDF. */
+export function portadaBordeEnlaces(datos: DatosPortadaBorde): Record<'sitio' | 'instagram', Rect> {
+  const e = portadaInterno(datos).enlaces, r = (x: number) => Math.round(x * 100) / 100, q = (c: Rect): Rect => ({ x: r(c.x), y: r(c.y), w: r(c.w), h: r(c.h) });
+  return { sitio: q(e.sitio), instagram: q(e.instagram) };
+}
 export function renderPortadaBorde(datos: DatosPortadaBorde): string {
   const p = portadaInterno(datos), capa: CapaCatalogo = capaTemaCatalogo(datos.tema, p.W, p.H, p.zonas, `catalogo-borde-portada-${datos.tipo}`);
   return svgBorde(p.W, p.H, p.defs, p.cuerpo + capa.svg);
@@ -138,24 +145,16 @@ export function renderSeparadorBorde(datos: DatosSeparadorBorde): string {
 }
 
 // ── PIE translucido sobre la imagen ─────────────────────────────────────────────
-const MX_PIE = 40, TAM_ENLACES = 15, TAM_FECHA = 13, TAM_NUM = 26;
+const MX_PIE = 40, TAM_FECHA = 15, TAM_NUM = 26;
 function pieInterno(datos: DatosPieBorde) {
-  const W = PAGINA_BORDE.ancho, H = PIE_BORDE_ALTO, yEnlaces = H - 52, yFecha = H - 30, yNum = H - 34;
-  const linea = `${TEXTO_SITIO}${SEPARADOR_PIE}${TEXTO_INSTAGRAM}`, wSitio = medir(TEXTO_SITIO, 'regular', TAM_ENLACES), wSep = medir(`${TEXTO_SITIO}${SEPARADOR_PIE}`, 'regular', TAM_ENLACES), wInst = medir(TEXTO_INSTAGRAM, 'regular', TAM_ENLACES);
+  const W = PAGINA_BORDE.ancho, H = PIE_BORDE_ALTO, yFecha = H - 34, yNum = H - 34;
   const pag = Math.max(1, Math.round(Number(datos.pagina) || 1)), total = Number(datos.total) > 0 ? Math.max(pag, Math.round(Number(datos.total))) : 0;
   const num = total ? `${pag} / ${total}` : String(pag);
   const fecha = datos.fechaPrecios ? `Precios vigentes al ${datos.fechaPrecios}` : '';
   const defs = `<linearGradient id="bpieSombra" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"/><stop offset="0.5" stop-color="#000000" stop-opacity="0.46"/><stop offset="1" stop-color="#000000" stop-opacity="0.86"/></linearGradient>`;
-  let cuerpo = `<rect x="0" y="0" width="${n(W)}" height="${n(H)}" fill="url(#bpieSombra)"/>` +
-    texto(MX_PIE, yEnlaces, TAM_ENLACES, F.regular, COLORES_BORDE.texto, linea) + texto(W - MX_PIE, yNum, TAM_NUM, F.extrabold, COLORES_BORDE.texto, num, 'end');
+  let cuerpo = `<rect x="0" y="0" width="${n(W)}" height="${n(H)}" fill="url(#bpieSombra)"/>` + texto(W - MX_PIE, yNum, TAM_NUM, F.extrabold, COLORES_BORDE.texto, num, 'end');
   if (fecha) cuerpo += texto(MX_PIE, yFecha, TAM_FECHA, F.bold, COLORES_BORDE.claro, fecha);
-  return { defs, cuerpo, W, H, enlaces: { sitio: { x: MX_PIE, y: yEnlaces - TAM_ENLACES, w: wSitio, h: TAM_ENLACES * 1.35 }, instagram: { x: MX_PIE + wSep, y: yEnlaces - TAM_ENLACES, w: wInst, h: TAM_ENLACES * 1.35 } } as Record<'sitio' | 'instagram', Rect> };
+  return { defs, cuerpo, W, H };
 }
 /** Pie TRANSLUCIDO (sin fondo opaco): rasterizar con transparencia y poner sobre la parte baja de la imagen (paginaBorde().pie). */
 export function renderPieBorde(datos: DatosPieBorde): string { const p = pieInterno(datos); return svgBorde(p.W, p.H, p.defs, p.cuerpo); }
-/** Rectangulos (pt, relativos al ORIGEN DE LA PAGINA) de «visionsmart.app» y «@visionsmart.app» para las anotaciones de enlace del PDF. */
-export function pieBordeEnlaces(datos: DatosPieBorde): Record<'sitio' | 'instagram', Rect> {
-  const p = pieInterno(datos), oy = PAGINA_BORDE.alto - PIE_BORDE_ALTO, r = (x: number) => Math.round(x * 100) / 100;
-  const mover = (q: Rect): Rect => ({ x: r(q.x), y: r(q.y + oy), w: r(q.w), h: r(q.h) });
-  return { sitio: mover(p.enlaces.sitio), instagram: mover(p.enlaces.instagram) };
-}

@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  VERSION_MOTOR, PAGINA_BORDE, PIE_BORDE_ALTO, PX_POR_PT_BORDE, pxBorde, paginaBorde, rectCubrir, renderPortadaBorde, renderSeparadorBorde, renderPieBorde, pieBordeEnlaces, portadaBordeZonas,
+  VERSION_MOTOR, PAGINA_BORDE, PIE_BORDE_ALTO, PX_POR_PT_BORDE, pxBorde, paginaBorde, rectCubrir, renderPortadaBorde, renderSeparadorBorde, renderPieBorde, portadaBordeEnlaces, portadaBordeZonas,
   separadorBordeZonas, capaTemaCatalogo, intersecta, medir, URL_SITIO, URL_INSTAGRAM, ASPECTO_IMAGEN, paginaDe, type TemaCtx,
 } from '../src/index.ts';
 import { renderPortadaBordeConFuentes, renderSeparadorBordeConFuentes, renderPieBordeConFuentes } from '../src/con-fuentes.ts';
@@ -96,18 +96,19 @@ test('pie translucido: franja 810 × 120 SIN fondo opaco (degradado oscuro de 0 
   assert.ok(!/<(image|circle|path)/.test(s) && !/background/i.test(s), 'nada mas que el degradado y el texto');
 });
 test('pie: numero «6 / 7», fecha de precios y enlaces; sin total solo el numero; sin fecha no hay linea', () => {
-  const t = textos(renderPieBorde({ pagina: 6, total: 7, fechaPrecios: '22 nov 2026' })); assert.deepEqual(t.sort(), ['6 / 7', 'Precios vigentes al 22 nov 2026', 'visionsmart.app  ·  @visionsmart.app'].sort());
+  const t = textos(renderPieBorde({ pagina: 6, total: 7, fechaPrecios: '22 nov 2026' })); assert.deepEqual(t.sort(), ['6 / 7', 'Precios vigentes al 22 nov 2026'].sort(), 'solo la fecha y el numero: el sitio y Instagram ya vienen en la propia imagen');
   assert.ok(textos(renderPieBorde({ pagina: 3 })).includes('3') && !textos(renderPieBorde({ pagina: 3 })).some((x) => /vigentes/.test(x)));
   assert.ok(textos(renderPieBorde({ pagina: 9, total: 4 })).includes('9 / 9'), 'un total menor que la pagina se corrige (nunca «9 / 4»)'); assert.ok(textos(renderPieBorde({ pagina: 0 })).includes('1'), 'pagina minima 1');
-  const clar = renderPieBorde({ pagina: 1, total: 2 }).match(/fill="#FFFFFF"/g) || []; assert.ok(clar.length >= 2, 'texto BLANCO sobre el degradado oscuro (legible sobre la imagen)');
+  const clar = renderPieBorde({ pagina: 1, total: 2 }).match(/fill="#FFFFFF"/g) || []; assert.ok(clar.length >= 1, 'el numero de pagina va en BLANCO sobre el degradado oscuro (legible sobre la imagen)');
   assert.equal(renderPieBorde({ pagina: 2, total: 5, fechaPrecios: 'x' }), renderPieBorde({ pagina: 2, total: 5, fechaPrecios: 'x' }));
 });
-test('enlaces del pie: rectangulos DENTRO de la franja del pie, en coordenadas de la pagina, uno junto al otro', () => {
-  const e = pieBordeEnlaces({ pagina: 1, total: 3 }), g = paginaBorde();
-  for (const r of [e.sitio, e.instagram]) { assert.ok(r.x >= 0 && r.x + r.w <= g.ancho && r.y >= g.pie.y && r.y + r.h <= g.alto, 'dentro del pie y de la hoja'); assert.ok(r.w > 40 && r.h > 10); }
+test('enlaces de la PORTADA: rectangulos sobre «visionsmart.app» y «@visionsmart.app», dentro de la hoja y uno junto al otro', () => {
+  const d = { tipo: 'categoria' as const, titulo: 'Fundas', fecha: 'noviembre 2026' }, e = portadaBordeEnlaces(d), g = paginaBorde();
+  for (const r of [e.sitio, e.instagram]) { assert.ok(r.x >= 0 && r.x + r.w <= g.ancho && r.y >= 0 && r.y + r.h <= g.alto, 'dentro de la hoja'); assert.ok(r.w > 40 && r.h > 10); assert.ok(r.y > g.alto * 0.9, 'abajo, donde esta el texto'); }
   assert.ok(e.sitio.x + e.sitio.w <= e.instagram.x + 1e-9 && !intersecta(e.sitio, e.instagram, 0), 'sitio e instagram no se solapan');
   assert.equal(e.sitio.w, Math.round(medir('visionsmart.app', 'regular', 15) * 100) / 100); assert.ok(URL_SITIO.startsWith('https://visionsmart.app') && URL_INSTAGRAM.includes('instagram.com/visionsmart.app'));
-  const t = textos(renderPieBorde({ pagina: 1, total: 3 }))[0]; assert.ok(t.includes('visionsmart.app'));
+  assert.ok(textos(renderPortadaBorde(d)).some((t) => t.includes('visionsmart.app')), 'el texto de la portada existe');
+  assert.deepEqual(portadaBordeEnlaces(d), e, 'determinista');
 });
 test('el pie no tapa lo importante de la imagen: ocupa solo el ultimo 12 % de la hoja', () => { assert.ok(PIE_BORDE_ALTO / PAGINA_BORDE.alto < 0.12 + 1e-9); });
 
