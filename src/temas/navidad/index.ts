@@ -43,7 +43,7 @@ type Esq = 'tl' | 'tr' | 'bl' | 'br';
 export function capaNavidad(d: Dibujo, tema: TemaCtx, zonas: ZonaProtegida[], plantillaId: string): CapaTema {
   const { W, H } = d, rng = prngDe(tema, plantillaId), inten: Intensidad = tema.intensidad ?? 'equilibrada';
   const perfil = PERFILES[plantillaId] ?? { oscuro: esColorClaro(d.p.texto), regalos: ['rojo', 'dorado'] as E.ColorRegalo[], pool: { regalo: 3, pino: 2, arbol: 2, monte: 2, destello: 2, luces: 1 } };
-  const oscuro = perfil.oscuro, esc = ESCALA[inten];
+  const oscuro = esColorClaro(d.p.texto), esc = ESCALA[inten];
   const cajas: CajaDecor[] = [], partes: { prio: number; svg: string }[] = [];
   const prohibidas: Caja[] = zonas.map((z) => z.caja);
   const ocupadas: Caja[] = [];

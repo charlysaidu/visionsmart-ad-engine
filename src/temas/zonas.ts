@@ -2,7 +2,7 @@
  * ZONAS PROTEGIDAS de una plantilla: donde NUNCA se dibuja una decoracion. Salen del layout (por familia y formato), asi que valen para las 10 plantillas.
  * Son conservadoras: cubren el espacio maximo que pueden ocupar el texto y el precio (hasta 3 lineas de titulo, etiqueta + precio anterior apilados, etc.).
  */
-import type { Dibujo } from '../primitivas.ts';
+import { PAD_PILDORA_LOGO, type Dibujo } from '../primitivas.ts';
 import { medir } from '../util.ts';
 import type { Caja, ZonaProtegida } from './_base.ts';
 
@@ -14,15 +14,16 @@ export function zonasProtegidas(d: Dibujo, conPromo = true): ZonaProtegida[] {
   // logo: simbolo + «VISIONSMART»
   const lg = L.logo, tamLogo = lg.h * 0.62, ancho = lg.h + lg.h * 0.22 + medir('VISIONSMART', 'extrabold', tamLogo, tamLogo * 0.06);
   const x0 = lg.ancla === 'end' ? lg.x - ancho : lg.ancla === 'middle' ? lg.x - ancho / 2 : lg.x;
-  add('logo', { x: x0 - 6, y: lg.y - 6, w: ancho + 12, h: lg.h + 12 });
+  const pl = p.logo === 'pildora' ? PAD_PILDORA_LOGO : { x: 0, y: 0 };
+  add('logo', { x: x0 - 6 - pl.x, y: lg.y - 6 - pl.y, w: ancho + 12 + pl.x * 2, h: lg.h + 12 + pl.y * 2 });
 
   // titulo (hasta 3 lineas)
   const t = L.titulo;
   add('titulo', { x: t.ancla === 'end' ? t.x - t.ancho : t.ancla === 'middle' ? t.x - t.ancho / 2 : t.x, y: t.y - t.tamMax * 0.9, w: t.ancho, h: t.tamMax * 0.9 + t.tamMax * 1.06 * 2 + t.tamMax * 0.35 });
 
   // lista de caracteristicas
-  const li = L.lista;
-  add('lista', li.modo === 'fila' ? { x: li.x, y: li.y - 4, w: li.ancho, h: li.icono + 60 } : { x: li.x, y: li.y - 4, w: li.ancho, h: li.paso * (li.cantidad - 1) + li.icono + 60 });
+  const li = L.lista, plusBloque = li.bloque ? 32 : 0;
+  if (li.cantidad > 0) add('lista', li.modo === 'fila' ? { x: li.x, y: li.y - 4, w: li.ancho, h: li.icono + 60 + plusBloque } : li.modo === 'rejilla' ? { x: li.x, y: li.y - 4, w: li.ancho, h: (Math.ceil(li.cantidad / 2) - 1) * (li.pasoY ?? li.paso) + li.icono + 60 + plusBloque } : { x: li.x, y: li.y - 4, w: li.ancho, h: li.paso * (li.cantidad - 1) + li.icono + 60 + plusBloque });
 
   // PRODUCTO: toda la zona de la foto + el podio (que se dibuja detras y debajo de ella)
   add('producto', L.foto);

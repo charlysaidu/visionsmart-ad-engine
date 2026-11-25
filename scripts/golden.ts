@@ -1,4 +1,4 @@
-﻿// Genera test/golden/0.6.0.json: sha256 del SVG de cada combinacion con el motor SIN tema (referencia para la regresion cero de v0.7.0).
+﻿// Genera test/golden/1.0.0-base.json: sha256 del SVG de cada combinacion con el motor SIN tema (huellas de regresion del motor 1.0.0). Solo se regenera a proposito, cuando cambia el diseno.
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { IDS_PLANTILLAS, renderSvg, VERSION_MOTOR } from '../src/index.ts';
@@ -12,5 +12,5 @@ const out: Record<string, string> = {};
 for (const id of IDS_PLANTILLAS) for (const f of ['4x5', '1x1', '9x16'] as const) for (const [k, c] of Object.entries(casos)) {
   out[`${id}|${f}|${k}`] = createHash('sha256').update(renderSvg(id, { producto: prod, tasaBs: 163.33, ...c }, f)).digest('hex');
 }
-writeFileSync('test/golden/0.6.0.json', JSON.stringify({ version: VERSION_MOTOR, casos: out }, null, 1));
+writeFileSync('test/golden/1.0.0-base.json', JSON.stringify({ version: VERSION_MOTOR, casos: out }, null, 1));
 console.log(VERSION_MOTOR, Object.keys(out).length, 'huellas');

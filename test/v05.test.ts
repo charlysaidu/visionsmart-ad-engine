@@ -5,7 +5,7 @@ import { IDS_PLANTILLAS, renderSvg, VERSION_MOTOR } from '../src/index.ts';
 
 const prod = { nombre: 'Cargador Rapido 25W', precioUsd: 15, fotoHref: null, garantia: '3 meses', marcas: ['Samsung'] } as any;
 
-test('version del motor >= 0.5.0', () => assert.match(VERSION_MOTOR, /^0\.[5-9]\.\d+/));
+test('version del motor >= 0.5.0', () => assert.match(VERSION_MOTOR, /^(0\.[5-9]|[1-9]\d*\.\d+)\.\d+/));
 
 for (const id of IDS_PLANTILLAS) for (const f of ['4x5', '1x1', '9x16'] as const) {
   test(`${id} ${f}: PRECIO en Bs y USD, nada en Ninguno, nunca DESDE`, () => {
@@ -37,10 +37,11 @@ for (const f of ['4x5', '1x1', '9x16'] as const) {
     assert.ok(colores.length > 5);
     for (const c of colores) {
       const { h, s } = hsl(c);
-      const calido = s > 0.12 && (h < 75 || h > 335) && !(s < 0.2);
+      // el unico tono calido permitido es el blanco PERLA corporativo (#F4F1EA); nada de dorados
+      const calido = s > 0.12 && (h < 75 || h > 335) && !(s < 0.2) && c !== '#F4F1EA';
       assert.ok(!calido, `color calido/dorado en luxury-minimal: ${c}`);
     }
-    assert.ok(svg.includes('#1367A4') && svg.includes('#9D40CB') && svg.includes('#FFFFFF') && svg.includes('#0A0A0F'));
-    assert.ok(!/#(9C7B43|C8A96D|8C6D3B|B89B66|A88650|B8935A|DCD7CF|F3F0EA)/i.test(svg));
+    assert.ok(svg.includes('#1367A4') && svg.includes('#9D3FCB') && svg.includes('#FFFFFF') && svg.includes('#0A0A0F'));
+    assert.ok(!/#(9C7B43|C8A96D|8C6D3B|B89B66|A88650|B8935A|DCD7CF|F3F0EA)/i.test(svg));      // dorados y beige que NO son el perla corporativo
   });
 }

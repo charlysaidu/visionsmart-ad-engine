@@ -13,13 +13,13 @@ const dibujo = (id: any, f: Formato): Dibujo => { const p = PLANTILLAS[id], { an
 const PROMO = { activa: true, precioPromoUsd: 12.85, precioAnteriorUsd: 15, unidades: 8, vigenciaISO: '2026-12-31' };
 
 test('version 0.7.0 y registro de temas', () => {
-  assert.match(VERSION_MOTOR, /^0\.[7-9]\.\d+/);
+  assert.match(VERSION_MOTOR, /^(0\.[7-9]|[1-9]\d*\.\d+)\.\d+/);
   assert.deepEqual(IDS_TEMAS, ['navidad']); assert.equal(TEMAS.navidad.nombre, 'Navidad VisionSmart');
 });
 
-// ── regresion CERO: sin tema la salida es byte-identica a la de v0.6.0 (huellas sha256 capturadas antes de tocar el motor) ──
-test('sin tema (ausente o null) la salida es BYTE-IDENTICA a v0.6.0 en 10 plantillas × 3 formatos × 5 casos', () => {
-  const g = JSON.parse(readFileSync(new URL('./golden/0.6.0.json', import.meta.url), 'utf8')); assert.equal(g.version, '0.6.0');
+// ── regresion: sin tema (ausente o null) la salida es EXACTAMENTE la de las huellas sha256 del motor 1.0.0 (capturadas tras el rediseno de las 10 plantillas) ──
+test('sin tema (ausente o null) la salida coincide con las huellas 1.0.0 en 10 plantillas × 3 formatos × 5 casos', () => {
+  const g = JSON.parse(readFileSync(new URL('./golden/1.0.0-base.json', import.meta.url), 'utf8')); assert.equal(g.version, '1.0.0');
   const casos: Record<string, any> = {
     usd: { precio: 'usd' }, bs: { precio: 'bs' }, ninguno: { precio: 'ninguno' },
     promo: { precio: 'usd', promo: PROMO }, promoBs: { precio: 'bs', promo: { activa: true, precioPromoUsd: 10, vigenciaISO: '2026-12-31' } },

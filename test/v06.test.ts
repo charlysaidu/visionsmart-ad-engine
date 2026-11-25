@@ -16,7 +16,7 @@ function textos(svg: string): T[] {
   return [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)"[^>]*? font-size="([\d.]+)"[^>]*>([^<]*)(?:<tspan[^>]*>[^<]*<\/tspan>)?<\/text>/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]), tam: Number(m[3]), texto: m[4] }));
 }
 
-test('version del motor >= 0.6.0', () => assert.match(VERSION_MOTOR, /^0\.[6-9]\.\d+/));
+test('version del motor >= 0.6.0', () => assert.match(VERSION_MOTOR, /^(0\.[6-9]|[1-9]\d*\.\d+)\.\d+/));
 
 for (const id of IDS_PLANTILLAS) for (const f of FORMATOS) for (const modo of ['bs', 'usd'] as const) {
   test(`${id} ${f} ${modo}: precio anterior tachado, etiqueta OFERTA, precio y vigencia sin pisarse`, () => {

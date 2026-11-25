@@ -11,7 +11,7 @@ const NAV = (s: string | number): TemaCtx => ({ id: 'navidad', semilla: s, produ
 const ancho = (svg: string) => Number(/ width="(\d+)"/.exec(svg)![1]), alto = (svg: string) => Number(/ height="(\d+)"/.exec(svg)![1]), vb = (svg: string) => /viewBox="([^"]+)"/.exec(svg)![1];
 const textos = (svg: string) => [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
 
-test('version del motor >= 0.9.0', () => assert.match(VERSION_MOTOR, /^0\.9\.\d+/));
+test('version del motor >= 0.9.0', () => assert.match(VERSION_MOTOR, /^(0\.9|[1-9]\d*\.\d+)\.\d+/));
 
 // ── geometria ──
 test('pagina borde a borde: 810 × 1012,5 pt = 4:5 EXACTO (1080 × 1350 px a 96 dpi)', () => {

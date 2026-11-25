@@ -14,14 +14,16 @@
  */
 import { caracteristicasDe, garantiaDe } from './datos.ts';
 import { layoutDe } from './layouts.ts';
-import { PLANTILLAS, IDS_PLANTILLAS } from './plantillas.ts';
+import { PLANTILLAS, IDS_PLANTILLAS, plantillaDe, varianteSugerida } from './plantillas.ts';
+import { reflejoFoto } from './capas.ts';
 import * as P from './primitivas.ts';
 import { FORMATOS, FUENTE_JAKARTA, type ContextoAnuncio, type Formato, type ModoPrecio, type PlantillaId } from './tipos.ts';
 import { calcularPromo } from './promo.ts';
 import { capaDeTema, etiquetaDeTema } from './temas/index.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '0.9.0';
+export const VERSION_MOTOR = '1.0.0';
+export { plantillaDe, varianteSugerida, type VarianteFondo } from './plantillas.ts';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
 export { TEMAS, IDS_TEMAS, INTENSIDADES, ETIQUETAS_PROMO_NAVIDAD, zonasProtegidas, capaDeTema, hashSemilla, intersecta, type TemaCtx, type IdTema, type Intensidad, type ElementoTema, type Caja, type CapaTema, type ZonaProtegida, type DefinicionTema } from './temas/index.ts';
@@ -42,8 +44,9 @@ export function textosPrecio(modo: ModoPrecio, usd: number | null | undefined, t
 }
 
 export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Formato): string {
-  const p = PLANTILLAS[id];
-  if (!p) throw new Error(`Plantilla desconocida: ${id}`);
+  if (!PLANTILLAS[id]) throw new Error(`Plantilla desconocida: ${id}`);
+  // LUXURY MINIMAL tiene dos fondos (perla / negro); `variante` lo fija y, si no se indica, se sugiere segun el producto (ver varianteSugerida)
+  const p = plantillaDe(id, ctx.variante ?? varianteSugerida(ctx.producto));
   const dim = FORMATOS[formato];
   if (!dim) throw new Error(`Formato desconocido: ${formato}`);
   const { ancho: W, alto: H } = dim;
@@ -53,6 +56,7 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
   const marca = { web: 'visionsmart.app', redes: '@visionsmart.app', ...(ctx.marca ?? {}) };
 
   const { lineas, tam } = tituloEnLineas(prod.nombre, lay.titulo.ancho, lay.titulo.tamMax, lay.titulo.tamMin);
+  d.tl = { n: lineas.length, tam };                                              // los paneles de cristal se ajustan al titulo real
   const modo = ctx.precio ?? 'bs';
   const promo = calcularPromo(prod.precioUsd, ctx.promo);
   // en promocion el precio grande es el promocional y el anterior sale tachado; la etiqueta pasa a "OFERTA"
@@ -65,6 +69,7 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
   // el orden de dibujo es el orden de las capas: fondo -> adornos -> (vidrio) -> podio -> foto -> textos -> logo/pie
   const cuerpo = [
     P.fondo(d),
+    reflejoFoto(d, prod.fotoHref),                                                 // reflejo en el piso (solo plantillas con reflejo): va sobre el fondo y antes de las luces
     P.adornosFondo(d),
     P.adornoDetrasFoto(d),
     P.podio(d),

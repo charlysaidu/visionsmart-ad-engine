@@ -29,6 +29,8 @@ export type ContextoAnuncio = {
   etiquetaPrecio?: string | null;
   /** Modo promocion (precio anterior tachado, % de descuento, unidades limitadas, vigencia). */
   promo?: DatosPromo | null;
+  /** Solo LUXURY MINIMAL: fondo 'claro' (blanco perla) u 'oscuro' (negro). Sin indicar: lo sugiere el producto (varianteSugerida). */
+  variante?: 'claro' | 'oscuro';
   /** Tema visual (capa decorativa sobre la plantilla). null / ausente = sin tema (salida identica a la de siempre). */
   tema?: TemaCtx | null;
   marca?: { web?: string; redes?: string };
@@ -40,7 +42,42 @@ export type Parada = [offset: number, color: string, opacidad?: number];
 /** Degradado lineal; angulo en grados: 0 = izquierda->derecha, 90 = arriba->abajo. */
 export type Grad = { paradas: Parada[]; angulo?: number };
 
+/** Familia de composicion para los formatos 1x1 y 9x16 (el 4x5 tiene una disposicion propia por plantilla). */
 export type Familia = 'clasico' | 'centrado' | 'editorial';
+
+/** Referencia de posicion de una capa decorativa: el lienzo completo o la caja de la foto del producto (x, y en 0..1 de esa caja). */
+export type RefCapa = 'lienzo' | 'foto';
+/** Zonas del layout a las que se puede ajustar un panel de cristal. */
+export type RefPanel = 'foto' | 'lista' | 'precio' | 'titulo' | 'garantia' | 'lienzo';
+
+/**
+ * `solo: '4x5'` = la capa existe solo en el formato 4:5 (las demas capas valen en los 3 formatos).
+ * CAPAS DECORATIVAS (JSON puro): lo que da personalidad a cada plantilla. Se dibujan en orden, detras del producto.
+ * Las coordenadas son fracciones (0..1) del lienzo o de la caja de la foto (segun `ref`), asi valen en los 3 formatos.
+ * Todo se dibuja con degradados y formas simples (sin filtros, mascaras ni recortes), compatible con react-native-svg.
+ */
+export type Capa = { solo?: '4x5' } & (
+  /** Luz ambiental: elipse con degradado radial (centro -> transparente). rx/ry en fraccion del ancho/alto de la referencia. */
+  | { t: 'luz'; ref?: RefCapa; x: number; y: number; rx: number; ry?: number; color: string; op: number }
+  /** Cuatro esquinas (corchetes finos) con degradado de marca, alrededor de la referencia. */
+  | { t: 'marco'; ref?: RefCapa; color: string[]; op: number; inset: number; largo: number; grosor?: number }
+  /** Linea fina con degradado que se desvanece en los extremos. */
+  | { t: 'linea'; ref?: RefCapa; x1: number; y1: number; x2: number; y2: number; color: string[]; op: number; grosor?: number }
+  /** Banda diagonal (paralelogramo con degradado a lo largo). `largo` y `grosor` en px del formato 4x5 (se escalan con el ancho). */
+  | { t: 'banda'; x: number; y: number; largo: number; grosor: number; angulo: number; color: string[]; op: number }
+  /** Aro (elipse con trazo): `r` es fraccion del ancho del lienzo. */
+  | { t: 'aro'; ref?: RefCapa; x: number; y: number; r: number; ry?: number; color: string[]; op: number; grosor?: number }
+  /** Disco relleno con degradado radial (forma de luz). */
+  | { t: 'disco'; ref?: RefCapa; x: number; y: number; r: number; color: string; op: number; opBorde?: number }
+  /** Poligono (puntos en fracciones del lienzo) con relleno y trazo opcionales. */
+  | { t: 'poli'; pts: [number, number][]; relleno: string; op: number; trazo?: string; opTrazo?: number; grosor?: number }
+  /** Malla de puntos pequenos. */
+  | { t: 'puntos'; x: number; y: number; cols: number; filas: number; paso: number; color: string; op: number; r?: number }
+  /** Panel de cristal (superficie translucida con borde de degradado y reflejo suave), ajustado a una zona del layout. */
+  | { t: 'panel'; ref: RefPanel; pad: number; rx: number; relleno: string; opRelleno: number; borde: string[]; opBorde: number; brillo?: number }
+  /** Elipse de piso: el aro luminoso bajo el producto (la plataforma ligera del estudio). */
+  | { t: 'piso'; ancho: number; alto: number; color: string[]; op: number; grosor?: number }
+);
 
 export type Plantilla = {
   id: PlantillaId;
@@ -53,21 +90,30 @@ export type Plantilla = {
   acento: string[];
   titulo: { ancla: 'start' | 'end'; peso?: 'bold' };       // peso: por defecto ExtraBold
   icono: { estilo: 'circulo' | 'linea'; color: string; relleno: string; borde: string };
-  precio: { color: string[]; desde: string; vidrio?: boolean };
-  garantia: { estilo: 'borde' | 'relleno'; borde: string; relleno: string; texto: string; textoSec: string; degradado?: string[] };
-  podio: { tipo: 'disco' | 'cilindro' | 'ninguno'; tapa: string[]; cuerpo: string[]; borde: string; brillo: string };
+  /** `acento`: filete con el degradado de marca bajo el precio (detalle). */
+  precio: { color: string[]; desde: string; vidrio?: boolean; acento?: string[] };
+  /** estilo 'boton': pildora con degradado de marca (la garantia como boton). */
+  garantia: { estilo: 'borde' | 'relleno' | 'boton'; borde: string; relleno: string; texto: string; textoSec: string; degradado?: string[] };
+  podio: { tipo: 'disco' | 'cilindro' | 'ninguno'; tapa: string[]; cuerpo: string[]; borde: string; brillo: string; bordeDegradado?: string[]; sombra?: string };
   halo?: { color: string; opacidad: number };
   adornos: string[];
-  logo: 'claro' | 'oscuro';
+  /** Capas decorativas propias de la plantilla (ver `Capa`). */
+  capas?: Capa[];
+  /** Opciones de la foto del producto: inclinacion (grados), reflejo en el piso (opacidad 0..1, solo con fondo vertical) y sombra de contacto. */
+  foto?: { rot?: number; reflejo?: number; sombra?: 'natural' | 'estudio' | 'ninguna' };
+  /** Chip del descuento (-N%). Por defecto: degradado de acento con texto blanco. `lado`: esquina de la foto donde va. */
+  chip?: { relleno: string[]; texto: string; lado?: 'izq' | 'der' };
+  /** Color del texto de las tarjetas de caracteristicas y relleno de la tarjeta (modo 'bloque' del layout). */
+  tarjeta?: { relleno: string; borde: string; opRelleno?: number };
+  logo: 'claro' | 'oscuro' | 'pildora';
   pie: string;
 };
-
 // ── Zonas de un layout ──────────────────────────────────────────────────────────
 export type Ancla = 'start' | 'middle' | 'end';
 export type Layout = {
   logo: { x: number; y: number; h: number; ancla: Ancla };
   titulo: { x: number; y: number; ancho: number; ancla: Ancla; tamMax: number; tamMin: number };
-  lista: { x: number; y: number; ancho: number; modo: 'columna' | 'fila'; paso: number; cantidad: number; tam: number; icono: number };
+  lista: { x: number; y: number; ancho: number; modo: 'columna' | 'fila' | 'rejilla'; paso: number; cantidad: number; tam: number; icono: number; /** alto de cada fila en modo 'rejilla' (2 columnas) */ pasoY?: number; /** tarjetas (bloques) en lugar de lineas sueltas */ bloque?: boolean };
   foto: { x: number; y: number; w: number; h: number };
   podio: { cx: number; cy: number; rx: number; ry: number; alto: number };
   precio: { x: number; y: number; ancho: number; ancla: Ancla; tam: number };

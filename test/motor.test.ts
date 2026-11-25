@@ -50,7 +50,7 @@ for (const id of IDS_PLANTILLAS) {
       assert.ok(svg.includes('Bs. 5.100') && svg.includes('PRECIO'), 'precio');
       assert.ok(svg.includes('GARANTÍA') && svg.includes('6 MESES'), 'garantia');
       assert.ok(svg.includes('visionsmart.app') && svg.includes('@visionsmart.app'), 'pie');
-      assert.equal((svg.match(/<image /g) ?? []).length, 2, 'foto + logo original');
+      assert.equal((svg.match(/<image /g) ?? []).length, 2 + (PLANTILLAS[id].foto?.reflejo ? 1 : 0), 'foto + logo original (+ el reflejo de las plantillas que lo llevan)');
       assert.ok(svg.includes(FOTO));
       // todo texto con coordenadas dentro del lienzo
       for (const m of svg.matchAll(/<text x="([\d.\-]+)" y="([\d.\-]+)"/g)) {
@@ -69,9 +69,15 @@ for (const id of IDS_PLANTILLAS) {
       dentro(l.garantia.x, l.garantia.y, l.garantia.w, l.garantia.h, 'garantia');
       dentro(l.podio.cx - l.podio.rx, l.podio.cy - l.podio.ry, l.podio.rx * 2, l.podio.ry * 2 + l.podio.alto, 'podio');
       assert.ok(l.pie.y < H && l.precio.y < H);
-      // la lista no pisa el precio ni el pie
-      const ultimo = l.lista.modo === 'columna' ? l.lista.y + (l.lista.cantidad - 1) * l.lista.paso + l.lista.icono : l.lista.y + l.lista.icono;
-      assert.ok(ultimo < l.precio.y - l.precio.tam * 0.9, `${id} ${f}: la lista (${ultimo}) llega al precio (${l.precio.y})`);
+      // la lista no pisa el precio ni el pie: queda por encima del precio o, en las disposiciones que la ponen debajo (PURE WHITE) o al lado (MODERN GLASS), no se cruzan sus cajas
+      if (l.lista.cantidad > 0) {
+        const filas = l.lista.modo === 'rejilla' ? Math.ceil(l.lista.cantidad / 2) : l.lista.cantidad;
+        const li = l.lista.modo === 'fila' ? { x: l.lista.x, y: l.lista.y, w: l.lista.ancho, h: l.lista.icono } : { x: l.lista.x, y: l.lista.y, w: l.lista.ancho, h: (filas - 1) * (l.lista.pasoY ?? l.lista.paso) + l.lista.icono };
+        const pr = { x: l.precio.ancla === 'end' ? l.precio.x - l.precio.ancho : l.precio.ancla === 'middle' ? l.precio.x - l.precio.ancho / 2 : l.precio.x, y: l.precio.y - l.precio.tam * 1.05, w: l.precio.ancho, h: l.precio.tam * 1.05 + 10 };
+        const cruza = li.x < pr.x + pr.w && li.x + li.w > pr.x && li.y < pr.y + pr.h && li.y + li.h > pr.y;
+        assert.ok(!cruza, `${id} ${f}: la lista pisa el precio`);
+        assert.ok(li.y + li.h < l.pie.y - 20, `${id} ${f}: la lista llega al pie`);
+      }
     }
   });
 }
