@@ -20,3 +20,9 @@ export function incrustarFuentesSvg(svg: string): string { const i = svg.indexOf
 export const renderPortadaConFuentes = (d: DatosPortada, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderPortada(d, t, p));
 export const renderCabeceraConFuentes = (d: DatosCabecera, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderCabecera(d, t, p));
 export const renderPieConFuentes = (d: DatosPie, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderPie(d, t, p));
+
+// ── Catalogo BORDE A BORDE (0.9.0): portada y separador oscuros de hoja completa y pie translucido, con las mismas fuentes incrustadas ──
+import { renderPortadaBorde, renderSeparadorBorde, renderPieBorde, type DatosPortadaBorde, type DatosSeparadorBorde, type DatosPieBorde } from './catalogo/index.ts';
+export const renderPortadaBordeConFuentes = (d: DatosPortadaBorde): string => incrustarFuentesSvg(renderPortadaBorde(d));
+export const renderSeparadorBordeConFuentes = (d: DatosSeparadorBorde): string => incrustarFuentesSvg(renderSeparadorBorde(d));
+export const renderPieBordeConFuentes = (d: DatosPieBorde): string => incrustarFuentesSvg(renderPieBorde(d));

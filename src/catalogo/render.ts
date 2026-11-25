@@ -29,18 +29,18 @@ export type DatosPie = { pagina: number; fechaPrecios?: string | null; tema?: Te
 function svg(wPt: number, hPt: number, defs: string, cuerpo: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${pxDePt(wPt)}" height="${pxDePt(hPt)}" viewBox="0 0 ${n(wPt)} ${n(hPt)}"><defs>${defs}</defs>${cuerpo}</svg>`;
 }
-const texto = (x: number, y: number, tam: number, fuente: string, fill: string, s: string, ancla: 'start' | 'middle' | 'end' = 'start', extra = '') =>
+export const texto = (x: number, y: number, tam: number, fuente: string, fill: string, s: string, ancla: 'start' | 'middle' | 'end' = 'start', extra = '') =>
   `<text x="${n(x)}" y="${n(y)}" font-family="${fuente}" font-size="${n(tam)}" text-anchor="${ancla}"${extra} fill="${fill}">${esc(s)}</text>`;
 const logoImg = (cx: number, cy: number, d: number) => `<image href="${LOGO_SIMBOLO_HREF}" x="${n(cx - d / 2)}" y="${n(cy - d / 2)}" width="${n(d)}" height="${n(d)}" preserveAspectRatio="xMidYMid meet"/>`;
 
 /** Logo (simbolo original + «VISIONSMART» en degradado) cuya CAJA queda en `x..x+w`; devuelve su svg, su caja y su ancho. */
-function lockup(x: number, yCentro: number, d: number, conTexto: boolean, idGrad: string): { svg: string; caja: Rect; defs: string } {
+export function lockup(x: number, yCentro: number, d: number, conTexto: boolean, idGrad: string): { svg: string; caja: Rect; defs: string } {
   const tam = d * 0.62, esp = tam * 0.06, wTxt = conTexto ? medir('VISIONSMART', 'extrabold', tam, esp) : 0, w = d + (conTexto ? d * 0.22 + wTxt : 0);
   const defs = conTexto ? gradColores(idGrad, MARCA, 0) : '';
   const cuerpo = logoImg(x + d / 2, yCentro, d) + (conTexto ? `<text x="${n(x + d * 1.22)}" y="${n(yCentro + tam * 0.36)}" font-family="${F.extrabold}" font-size="${n(tam)}" letter-spacing="${n(esp)}" fill="url(#${idGrad})">VISIONSMART</text>` : '');
   return { svg: cuerpo, caja: { x, y: yCentro - d / 2, w, h: d }, defs };
 }
-const pad = (c: Rect, m: number): Caja => ({ x: c.x - m, y: c.y - m, w: c.w + 2 * m, h: c.h + 2 * m });
+export const pad = (c: Rect, m: number): Caja => ({ x: c.x - m, y: c.y - m, w: c.w + 2 * m, h: c.h + 2 * m });
 const conTema = (cuerpo: string, capa: CapaCatalogo) => cuerpo + capa.svg;
 
 // ── PORTADA ─────────────────────────────────────────────────────────────────────

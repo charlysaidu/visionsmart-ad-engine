@@ -14,7 +14,7 @@ import { renderPortadaConFuentes, renderCabeceraConFuentes, renderPieConFuentes 
 const TAMANOS: TamanoPagina[] = ['carta', 'a4'], POR: PorPagina[] = [1, 2];
 const NAV: TemaCtx = { id: 'navidad', semilla: 'x', productoId: 'cat' };
 
-test('version 0.8.0', () => assert.equal(VERSION_MOTOR, '0.8.0'));
+test('version del motor >= 0.8.0', () => assert.match(VERSION_MOTOR, /^0\.[8-9]\.\d+/));
 
 // ── regresion cero: renderSvg es IDENTICO a 0.7.0 (210 huellas: 10 plantillas × 3 formatos × 7 casos, con y sin tema Navidad) ──
 test('renderSvg no cambia: salida byte-identica a v0.7.0', () => {
