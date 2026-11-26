@@ -7,6 +7,6 @@ export {
 export { capaTemaCatalogo, type CapaCatalogo } from './tema.ts';
 // v0.9.0: catalogo BORDE A BORDE (cada imagen 4:5 ocupa la hoja completa; portada y separador oscuros; pie translucido sobre la imagen)
 export {
-  PAGINA_BORDE, PIE_BORDE_ALTO, PX_POR_PT_BORDE, COLORES_BORDE, pxBorde, paginaBorde, rectCubrir, renderPortadaBorde, renderSeparadorBorde, portadaBordeEnlaces, portadaBordeZonas, separadorBordeZonas,
+  PAGINA_BORDE, PIE_BORDE_ALTO, PX_POR_PT_BORDE, COLORES_BORDE, pxBorde, paginaBorde, rectCubrir, renderPortadaBorde, renderSeparadorBorde, SUBTITULO_PORTADA, textoCantidadProductos, portadaBordeEnlaces, portadaBordeZonas, separadorBordeZonas,
   type PaginaBordeGeo, type DatosPortadaBorde, type DatosSeparadorBorde,
 } from './borde.ts';

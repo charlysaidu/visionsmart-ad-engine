@@ -59,7 +59,13 @@ export function rectCubrir(anchoPx: number, altoPx: number): Rect {
   return { x: r((ancho - w) / 2), y: r((alto - h) / 2), w: r(w), h: r(h) };
 }
 
-export type DatosPortadaBorde = { tipo: 'categoria' | 'inventario'; titulo?: string; fecha: string; tema?: TemaCtx | null };
+/**
+ * Datos de la portada. Sin `estilo`: la portada OSCURA de 0.9.0 (byte-identica). Con `estilo: 'premium'` (1.4.0): portada de marca con degradado #1367A4 → #9D40CB, logo en circulo blanco,
+ * titulo gigante, subtitulo, fecha, numero de productos y decoracion translucida. En premium `tipo` puede ser 'lote' (mezcla de categorias → «CATÁLOGO»):
+ *   · 'categoria' → nombre de la categoria en MAYUSCULAS    · 'inventario' → «CATÁLOGO COMPLETO»    · 'lote' → «CATÁLOGO»
+ * `fecha` llega ya formateada (el motor no formatea): en premium se espera la fecha larga («26 de noviembre de 2026»). `cantidad` = numero de productos (opcional; si falta no se pinta).
+ */
+export type DatosPortadaBorde = { tipo: 'categoria' | 'inventario' | 'lote'; titulo?: string; fecha: string; tema?: TemaCtx | null; estilo?: 'premium'; cantidad?: number | null };
 export type DatosSeparadorBorde = { categoria: string; cantidad?: number | null; tema?: TemaCtx | null };
 
 /** Envoltura: viewBox en pt, width/height en px (2 px/pt). */
@@ -80,7 +86,51 @@ function fondoOscuro(W: number, H: number, id: string): { defs: string; cuerpo: 
 }
 
 // ── PORTADA (hoja completa, oscura) ─────────────────────────────────────────────
+export const SUBTITULO_PORTADA = 'VisionSmart · Tecnología y accesorios';
+/** Texto de la cantidad: «57 productos» / «1 producto» ('' si no hay). */
+export const textoCantidadProductos = (c: number | null | undefined): string => { const k = Math.round(Number(c)); return Number.isFinite(k) && k > 0 ? `${k} ${k === 1 ? 'producto' : 'productos'}` : ''; };
+
+// ── PORTADA PREMIUM (1.4.0): degradado de marca, logo en circulo blanco, titulo gigante ──────────────────────────────────────────────
+function portadaPremium(datos: DatosPortadaBorde) {
+  const W = PAGINA_BORDE.ancho, H = PAGINA_BORDE.alto, cx = W / 2, B = '#FFFFFF';
+  const defs = [`<linearGradient id="ppFondo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${COLORES_BORDE.azul}"/><stop offset="1" stop-color="${COLORES_BORDE.morado}"/></linearGradient>`,
+    `<radialGradient id="ppLuz" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>`].join('');
+  // Decoracion SUTIL: dos mallas de puntos en esquinas opuestas, arcos finos y una luz detras del logo
+  const puntos = (x0: number, y0: number) => { let s = ''; for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) s += `<circle cx="${n(x0 + i * 24)}" cy="${n(y0 + j * 24)}" r="${(i + j) % 3 === 0 ? 3.4 : 2.4}" fill="${B}" fill-opacity="${n(0.34 - (i + j) * 0.02)}"/>`; return s; };
+  const arco = (x: number, y: number, r: number, o: number) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="none" stroke="${B}" stroke-opacity="${o}" stroke-width="2"/>`;
+  const yLogo = 232, rLogo = 124, dImg = 178;
+  let cuerpo = `<rect x="0" y="0" width="${n(W)}" height="${n(H)}" fill="url(#ppFondo)"/>` +
+    `<circle cx="${n(cx)}" cy="${n(yLogo)}" r="${n(W * 0.5)}" fill="url(#ppLuz)"/>` +
+    arco(0, 0, 210, 0.16) + arco(0, 0, 300, 0.1) + arco(W, H, 250, 0.16) + arco(W, H, 350, 0.1) +
+    puntos(W - 40 - 5 * 24, 40) + puntos(40, H - 40 - 5 * 24);
+  const L = lockup(cx - dImg / 2, yLogo, dImg, false, 'ppLogo');
+  cuerpo += `<circle cx="${n(cx)}" cy="${n(yLogo)}" r="${n(rLogo + 10)}" fill="${B}" fill-opacity="0.22"/><circle cx="${n(cx)}" cy="${n(yLogo)}" r="${n(rLogo)}" fill="${B}"/>` + L.svg;
+  const titulo = datos.tipo === 'categoria' ? String(datos.titulo ?? '').trim() || 'CATÁLOGO' : datos.tipo === 'inventario' ? 'CATÁLOGO COMPLETO' : 'CATÁLOGO';
+  const maxAncho = W * 0.84, lt = tituloEnLineas(titulo, maxAncho, 118, 44), tam = lt.tam, interl = tam * 1.08, yTit = H * 0.53 - ((lt.lineas.length - 1) * interl) / 2;
+  const wMax = Math.max(...lt.lineas.map((l) => medir(l, 'extrabold', tam))), yUlt = yTit + (lt.lineas.length - 1) * interl, yBarra = yUlt + tam * 0.36;
+  lt.lineas.forEach((l, i) => { cuerpo += texto(cx, yTit + i * interl, tam, F.extrabold, B, l, 'middle'); });
+  const tamSub = 25, ySub = yBarra + 62, tamFecha = 22, yFecha = ySub + 44, cant = textoCantidadProductos(datos.cantidad), tamCant = 21, wCant = cant ? medir(cant, 'bold', tamCant) + 52 : 0, yCant = yFecha + 30, hCant = 42;
+  cuerpo += `<rect x="${n(cx - 48)}" y="${n(yBarra)}" width="96" height="5" rx="2.5" fill="${B}" fill-opacity="0.9"/>` +
+    texto(cx, ySub, tamSub, F.bold, B, SUBTITULO_PORTADA, 'middle', ' fill-opacity="0.95"') + texto(cx, yFecha, tamFecha, F.regular, B, datos.fecha, 'middle', ' fill-opacity="0.88"');
+  if (cant) cuerpo += `<rect x="${n(cx - wCant / 2)}" y="${n(yCant)}" width="${n(wCant)}" height="${hCant}" rx="${hCant / 2}" fill="${B}" fill-opacity="0.18" stroke="${B}" stroke-opacity="0.42" stroke-width="1.5"/>` + texto(cx, yCant + hCant / 2 + tamCant * 0.35, tamCant, F.bold, B, cant, 'middle');
+  const tamPie = 16, yPie = H - 58, textoPie = `${TEXTO_SITIO}${SEPARADOR_PIE}${TEXTO_INSTAGRAM}`;
+  cuerpo += texto(cx, yPie, tamPie, F.regular, B, textoPie, 'middle', ' fill-opacity="0.85"');
+  const wSub = medir(SUBTITULO_PORTADA, 'bold', tamSub), wFecha = medir(datos.fecha, 'regular', tamFecha), wPie = medir(textoPie, 'regular', tamPie);
+  const zonas: { nombre: string; caja: Caja }[] = [
+    { nombre: 'logo', caja: { x: cx - rLogo - 12, y: yLogo - rLogo - 12, w: 2 * rLogo + 24, h: 2 * rLogo + 24 } },
+    { nombre: 'titulo', caja: { x: cx - wMax / 2 - 10, y: yTit - tam - 6, w: wMax + 20, h: yBarra + 12 - (yTit - tam - 6) } },
+    { nombre: 'subtitulo', caja: { x: cx - wSub / 2 - 10, y: ySub - tamSub - 4, w: wSub + 20, h: tamSub + 14 } },
+    { nombre: 'fecha', caja: { x: cx - wFecha / 2 - 10, y: yFecha - tamFecha - 4, w: wFecha + 20, h: tamFecha + 14 } },
+    ...(cant ? [{ nombre: 'cantidad', caja: { x: cx - wCant / 2 - 6, y: yCant - 4, w: wCant + 12, h: hCant + 8 } }] : []),
+    { nombre: 'pie', caja: { x: cx - wPie / 2 - 10, y: yPie - 22, w: wPie + 20, h: 34 } },
+  ];
+  const wSitio = medir(TEXTO_SITIO, 'regular', tamPie), wSep = medir(`${TEXTO_SITIO}${SEPARADOR_PIE}`, 'regular', tamPie), wInst = medir(TEXTO_INSTAGRAM, 'regular', tamPie), x0 = cx - wPie / 2;
+  const enlaces: Record<'sitio' | 'instagram', Rect> = { sitio: { x: x0, y: yPie - tamPie, w: wSitio, h: tamPie * 1.35 }, instagram: { x: x0 + wSep, y: yPie - tamPie, w: wInst, h: tamPie * 1.35 } };
+  return { defs: defs + L.defs, cuerpo, zonas, W, H, enlaces };
+}
+
 function portadaInterno(datos: DatosPortadaBorde) {
+  if (datos.estilo === 'premium') return portadaPremium(datos);
   const W = PAGINA_BORDE.ancho, H = PAGINA_BORDE.alto, cx = W / 2, esCat = datos.tipo === 'categoria';
   const fo = fondoOscuro(W, H, 'bpf');
   const dLogo = 138, yLogo = H * 0.25, L = lockup(cx - dLogo / 2, yLogo, dLogo, false, 'bpLogo');

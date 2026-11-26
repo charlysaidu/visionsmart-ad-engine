@@ -22,7 +22,7 @@ import { calcularPromo } from './promo.ts';
 import { capaDeTema, etiquetaDeTema } from './temas/index.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '1.3.0';
+export const VERSION_MOTOR = '1.4.0';
 export { plantillaDe, varianteSugerida, type VarianteFondo } from './plantillas.ts';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
