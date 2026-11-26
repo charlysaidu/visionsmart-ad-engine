@@ -62,12 +62,12 @@ export const COMPROBANTE_ANCHO = 1240, COMPROBANTE_ALTO = 1754, COMPROBANTE_PX =
 const W = COMPROBANTE_ANCHO, H = COMPROBANTE_ALTO, M = 60;
 const COL_I = { x: M, w: 640 }, COL_D = { x: 764, w: 416 };           // 55 % / 37 % + hueco
 const CUERPO_Y = 346, CUERPO_B = 1320;                                 // franja del cuerpo
-const FILA = 96, ITEM_H = 88;                                          // paso y alto de una fila de producto
+const FILA = 92, ITEM_H = 84;                                          // paso y alto de una fila de producto
 const MAX_POR_HOJA = 6;
 const CARDS_Y = 1344, CARDS_H = 180;
 const COND_Y = 1540, PIE_Y = 1664;
 
-const C = { texto: '#0F172A', gris: '#5B6070', borde: '#E4DFD3', blanco: '#FFFFFF', verde: '#15803D', negro: '#000000' } as const;
+const C = { texto: '#0F172A', gris: '#5B6070', borde: '#E4DFD3', blanco: '#FFFFFF', verde: '#15803D', verdeTexto: '#166534', negro: '#000000' } as const;
 const F = FUENTE_JAKARTA;
 const MARCA = [AZUL, MORADO];
 
@@ -123,14 +123,18 @@ const iconoCirculo = (id: keyof typeof ICONOS_C, cx: number, cy: number, d: numb
   `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(d / 2)}" fill="url(#${idGrad})"/>` + icono(id, cx, cy, d * 0.52, C.blanco, 2);
 
 // ── paginacion ───────────────────────────────────────────────────────────────
+const lineasDireccion = (d: DatosComprobante): string[] => {
+  const c = d.cliente, retiro = d.entrega.tipo === 'tienda' || d.entrega.tipo === 'pickup';
+  return c.direccion ? envolver(c.direccion, 'bold', 22, COL_I.w - 48, 2) : retiro ? ['Retiro en tienda'] : [];
+};
 function alturaCliente(d: DatosComprobante): number {
-  const c = d.cliente, filas = [Boolean(c.telefono) || Boolean(c.email), Boolean(c.direccion) || d.entrega.tipo === 'tienda' || d.entrega.tipo === 'pickup'].filter(Boolean).length;
-  return 58 + filas * 56 + 18;
+  const c = d.cliente, dir = lineasDireccion(d);
+  return 70 + (c.telefono || c.email ? 58 : 0) + (dir.length ? 38 + dir.length * 27 : 0) + 14;
 }
 /** Cuantos productos lleva cada hoja. Una sola hoja si caben (con el resumen y el total); si no, hojas parejas de hasta 6. Nunca se omite un producto. */
 export function repartirProductos(totalItems: number, alturaClienteTarjeta = 186): number[] {
   const n0 = Math.max(0, Math.floor(totalItems));
-  const fijoUnica = 30 + alturaClienteTarjeta + 8 + 36 + 14 + 14 + 96 + 8 + 86, capUnica = Math.max(1, Math.floor((CUERPO_B - CUERPO_Y - fijoUnica) / FILA));
+  const fijoUnica = 30 + alturaClienteTarjeta + 8 + 32 + 10 + 12 + 90 + 8 + 86, capUnica = Math.max(1, Math.floor((CUERPO_B - CUERPO_Y - fijoUnica) / FILA));
   if (n0 <= capUnica) return [n0];
   const hojas = Math.max(2, Math.ceil(n0 / MAX_POR_HOJA)), base = Math.floor(n0 / hojas), extra = n0 % hojas;
   return Array.from({ length: hojas }, (_, i) => base + (i < extra ? 1 : 0));
@@ -163,16 +167,15 @@ function bloqueCliente(d: DatosComprobante, y: number): { svg: string; h: number
   let s = seccion(x, y + 14, 'DATOS DEL CLIENTE') + tarjeta(x, y + 30, w, hCard);
   const y0 = y + 30;
   s += T(x + pad, y0 + 46, tamParaAncho(c.nombre || 'Cliente', 'extrabold', w - 2 * pad, 30, 20), F.extrabold, C.texto, c.nombre || 'Cliente');
-  let cy = y0 + 58;
-  const campo = (xx: number, yy: number, ww: number, rot: string, val: string): string => etq(xx, yy + 6, rot, C.gris, 'start', 13) + T(xx, yy + 32, 22, F.bold, C.texto, recortar(val, 'bold', 22, ww));
+  let cy = y0 + 72;
+  const campo = (xx: number, yy: number, ww: number, rot: string, val: string): string => etq(xx, yy + 6, rot, C.gris, 'start', 14) + T(xx, yy + 32, 22, F.bold, C.texto, recortar(val, 'bold', 22, ww));
   if (c.telefono || c.email) {
     if (c.telefono && c.email) s += campo(x + pad, cy, (w - 3 * pad) * 0.4, 'TELÉFONO', c.telefono) + campo(x + pad + (w - 3 * pad) * 0.4 + pad, cy, (w - 3 * pad) * 0.6, 'CORREO', c.email);
     else s += c.telefono ? campo(x + pad, cy, w - 2 * pad, 'TELÉFONO', c.telefono) : campo(x + pad, cy, w - 2 * pad, 'CORREO', String(c.email));
-    cy += 56;
+    cy += 58;
   }
-  const retiro = d.entrega.tipo === 'tienda' || d.entrega.tipo === 'pickup';
-  if (c.direccion) { s += campo(x + pad, cy, w - 2 * pad, 'DIRECCIÓN', c.direccion); }
-  else if (retiro) { s += campo(x + pad, cy, w - 2 * pad, 'DIRECCIÓN', 'Retiro en tienda'); }
+  const dir = lineasDireccion(d);
+  if (dir.length) { s += etq(x + pad, cy + 6, 'DIRECCIÓN', C.gris, 'start', 14); dir.forEach((l, i) => { s += T(x + pad, cy + 32 + i * 27, 22, F.bold, C.texto, l); }); }
   return { svg: s, h: 30 + hCard };
 }
 function fila(it: ItemComprobante, x: number, y: number, w: number): string {
@@ -183,24 +186,25 @@ function fila(it: ItemComprobante, x: number, y: number, w: number): string {
   else s += logoImg(fx + fd / 2, fy + fd / 2, fd * 0.55, ' opacity="0.35"');
   const tx = x + 8 + fd + 16, wPrecio = 176, wTxt = w - (tx - x) - wPrecio - 22;
   const nombre = envolver(it.nombre || 'Producto', 'bold', 23, wTxt, 2);
-  const sub = [it.modelo ? String(it.modelo) : '', it.garantia ? String(it.garantia) : ''].filter(Boolean).join(' · ');
-  const bloqueH = nombre.length * 27 + (sub ? 24 : 0), y0 = y + (ITEM_H - bloqueH) / 2;
+  const partes = [it.modelo ? String(it.modelo) : '', it.garantia ? String(it.garantia) : ''].filter(Boolean);
+  const sub = nombre.length === 1 ? partes : partes.length ? [partes.join(' · ')] : [];
+  const bloqueH = nombre.length * 27 + sub.length * 22 + (sub.length ? 2 : 0), y0 = y + (ITEM_H - bloqueH) / 2;
   nombre.forEach((l, i) => { s += T(tx, y0 + 21 + i * 27, 23, F.bold, C.texto, l); });
-  if (sub) s += T(tx, y0 + nombre.length * 27 + 19, 16, F.regular, C.gris, recortar(sub, 'regular', 16, wTxt));
+  sub.forEach((l, i) => { s += T(tx, y0 + nombre.length * 27 + 18 + i * 22, 16, F.regular, C.gris, recortar(l, 'regular', 16, wTxt)); });
   const px = x + w - 20, st = formatoMonto(it.subtotal);
-  s += T(px, y + 40, tamParaAncho(st, 'extrabold', wPrecio, 28, 17), F.extrabold, MORADO, st, 'end');
+  s += T(px, y + 38, tamParaAncho(st, 'extrabold', wPrecio, 28, 17), F.extrabold, MORADO, st, 'end');
   const cant = it.cantidad > 1 ? `Cant. ${it.cantidad} × ${formatoMonto(it.precioUnitario)}` : 'Cant. 1';
-  s += T(px, y + 66, tamParaAncho(cant, 'regular', wPrecio, 16, 11), F.regular, C.gris, cant, 'end');
+  s += T(px, y + 62, tamParaAncho(cant, 'regular', wPrecio, 16, 11), F.regular, C.gris, cant, 'end');
   return s;
 }
 function resumenYTotal(d: DatosComprobante, y: number): string {
   const x = COL_I.x, w = COL_I.w;
   const lineas: [string, string, string][] = [['Subtotal', formatoMonto(d.resumen.subtotal), C.texto]];
   if (d.resumen.delivery) lineas.push(['Delivery', formatoMonto(d.resumen.delivery), C.texto]);
-  if (d.resumen.descuento) lineas.push([d.resumen.descuento.etiqueta || 'Descuento', '-' + formatoMonto(d.resumen.descuento.monto).replace(/^-/, ''), C.verde]);
+  if (d.resumen.descuento) lineas.push([d.resumen.descuento.etiqueta || 'Descuento', '-' + formatoMonto(d.resumen.descuento.monto).replace(/^-/, ''), C.verdeTexto]);
   let s = `<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="${C.borde}" stroke-width="2"/>`;
-  lineas.forEach(([a, b, col], i) => { const yy = y + 28 + i * 32; s += T(x + 6, yy, 21, F.regular, C.gris, a) + T(x + w - 6, yy, 22, F.bold, col, b, 'end'); });
-  const yb = y + 14 + lineas.length * 32 + 8, total = d.total.map(formatoMonto).join('  +  ');
+  lineas.forEach(([a, b, col], i) => { const yy = y + 26 + i * 30; s += T(x + 6, yy, 21, F.regular, C.gris, a) + T(x + w - 6, yy, 22, F.bold, col, b, 'end'); });
+  const yb = y + 12 + lineas.length * 30 + 8, total = d.total.map(formatoMonto).join('  +  ');
   s += rr(x, yb, w, 86, 24, 'url(#cmpBanda)') + T(x + 30, yb + 52, 22, F.bold, C.blanco, 'TOTAL PAGADO', 'start', ' letter-spacing="2.4"') +
     T(x + w - 30, yb + 56, tamParaAncho(total, 'extrabold', w - 320, 44, 22), F.extrabold, C.blanco, total, 'end');
   return s;
@@ -248,7 +252,7 @@ function tarjetasInferiores(d: DatosComprobante): string {
   return cuerpo(x(0), 'ENTREGA', ico, d.entrega.titulo, d.entrega.lineas || []) + cuerpo(x(1), '¿NECESITAS AYUDA?', 'chat', a0, aR) + cuerpo(x(2), 'GARANTÍA', 'escudo', d.garantia.titulo, d.garantia.lineas || []);
 }
 function condiciones(): string {
-  let s = etq(M, COND_Y + 18, 'CONDICIONES DE GARANTÍA', C.gris, 'start', 13), y = COND_Y + 42;
+  let s = etq(M, COND_Y + 18, 'CONDICIONES DE GARANTÍA', C.gris, 'start', 15), y = COND_Y + 42;
   for (const c of CONDICIONES_GARANTIA) for (const l of envolver(c, 'regular', 15.5, W - 2 * M, 2)) { s += T(M, y, 15.5, F.regular, C.gris, l); y += 20; }
   return s;
 }
@@ -276,10 +280,10 @@ export function renderComprobante(d: DatosComprobante): string[] {
     let y = CUERPO_Y;
     if (primera) { const c = bloqueCliente(d, y - 10); cuerpo += c.svg; y += c.h + 8; }
     cuerpo += seccion(COL_I.x, y + 14, primera ? 'DETALLE DE COMPRA' : 'DETALLE DE COMPRA (continuación)');
-    y += 36;
+    y += 32;
     items.forEach((it, i) => { cuerpo += fila(it, COL_I.x, y + i * FILA, COL_I.w); });
     y += items.length * FILA;
-    if (ultima) cuerpo += resumenYTotal(d, y + 14);
+    if (ultima) cuerpo += resumenYTotal(d, y + 10);
     else cuerpo += T(COL_I.x + COL_I.w, y + 26, 19, F.bold, MORADO, `Continúa en la hoja ${h + 2} →`, 'end');
     cuerpo += panelPago(d) + tarjetasInferiores(d) + condiciones() + pie();
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${COMPROBANTE_PX.ancho}" height="${COMPROBANTE_PX.alto}" viewBox="0 0 ${W} ${H}"><defs>${defs}</defs>${cuerpo}</svg>`;
