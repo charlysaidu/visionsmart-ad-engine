@@ -10,7 +10,7 @@ import { PLANTILLAS_02 } from './plantillas-02.ts';
 const PLANTILLAS_01: Record<Exclude<PlantillaId, keyof typeof PLANTILLAS_02>, Plantilla> = {
   // 01 · tecnologia premium sobre negro absoluto: iluminacion ambiental azul y morada, producto grande, boton de degradado
   'black-premium': {
-    id: 'black-premium', nombre: 'BLACK PREMIUM', familia: 'clasico', numero: 1, coleccion: 1, descripcion: 'Negro absoluto, luz azul y morada y boton de degradado',
+    id: 'black-premium', nombre: 'BLACK PREMIUM', familia: 'clasico', numero: 1, coleccion: 1, descripcion: 'Negro absoluto, luz azul y morada y botón de degradado',
     fondo: { angulo: 90, paradas: [[0, '#000000'], [1, '#000000']] },
     texto: '#F4F1EA', textoSec: '#A7ADBD',
     acento: [AZUL_CL, MORADO_CL],
@@ -156,7 +156,7 @@ const PLANTILLAS_01: Record<Exclude<PlantillaId, keyof typeof PLANTILLAS_02>, Pl
 
   // 07 · revista tecnologica: blanco perla, tipografia grande y jerarquizada, distribucion asimetrica, tarjetas pequenas
   'tech-editorial': {
-    id: 'tech-editorial', nombre: 'TECH EDITORIAL', familia: 'editorial', numero: 7, coleccion: 1, descripcion: 'Revista tecnologica, tipografia grande',
+    id: 'tech-editorial', nombre: 'TECH EDITORIAL', familia: 'editorial', numero: 7, coleccion: 1, descripcion: 'Revista tecnológica, tipografía grande',
     fondo: { angulo: 90, paradas: [[0, PERLA], [1, PERLA]] },
     texto: '#0A0A0F', textoSec: '#555A6B',
     acento: [AZUL, MORADO],
@@ -206,7 +206,7 @@ const PLANTILLAS_01: Record<Exclude<PlantillaId, keyof typeof PLANTILLAS_02>, Pl
 
   // 09 · energia y movimiento: negro, bandas diagonales azul y morada, producto inclinado, tipografia contundente
   'dynamic-tech': {
-    id: 'dynamic-tech', nombre: 'DYNAMIC TECH', familia: 'centrado', numero: 9, coleccion: 1, descripcion: 'Energia y movimiento en diagonal',
+    id: 'dynamic-tech', nombre: 'DYNAMIC TECH', familia: 'centrado', numero: 9, coleccion: 1, descripcion: 'Energía y movimiento en diagonal',
     fondo: { angulo: 90, paradas: [[0, '#000000'], [1, '#02040C']] },
     texto: '#FFFFFF', textoSec: '#B5C2EE',
     acento: ['#35C6FF', MORADO_CL],
@@ -231,7 +231,7 @@ const PLANTILLAS_01: Record<Exclude<PlantillaId, keyof typeof PLANTILLAS_02>, Pl
 
   // 10 · lujo minimalista: la mas sobria; blanco perla (o negro segun el producto), detalles corporativos muy discretos
   'luxury-minimal': {
-    id: 'luxury-minimal', nombre: 'LUXURY MINIMAL', familia: 'editorial', numero: 10, coleccion: 1, descripcion: 'La mas sobria: perla o negro',
+    id: 'luxury-minimal', nombre: 'LUXURY MINIMAL', familia: 'editorial', numero: 10, coleccion: 1, descripcion: 'La más sobria: perla o negro',
     fondo: { angulo: 90, paradas: [[0, PERLA], [1, PERLA]] },
     texto: '#0A0A0F', textoSec: '#4A4F5E',
     acento: ['#0A0A0F', '#0A0A0F'],

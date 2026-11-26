@@ -11,7 +11,7 @@ const PODIO_NINGUNO = { tipo: 'ninguno' as const, tapa: ['#16181F', '#07080B'], 
 export const PLANTILLAS_02: Record<'neon-edge' | 'clean-hex' | 'cosmic-flow' | 'minimal-stripes' | 'black-grid' | 'pearl-wave' | 'dual-tone' | 'info-box' | 'vision-frame' | 'diagonal-split', Plantilla> = {
   // 11 · neon elegante: negro, lineas luminosas en diagonal tras el producto, luz ambiental, boton de degradado
   'neon-edge': {
-    id: 'neon-edge', nombre: 'NEON EDGE', numero: 11, coleccion: 2, descripcion: 'Neon elegante: lineas luminosas en diagonal', familia: 'clasico',
+    id: 'neon-edge', nombre: 'NEON EDGE', numero: 11, coleccion: 2, descripcion: 'Neón elegante: líneas luminosas en diagonal', familia: 'clasico',
     fondo: FONDO_NEGRO, texto: '#FFFFFF', textoSec: '#AEB6CA', acento: [AZUL_CL, MORADO_CL],
     titulo: { ancla: 'end' },
     icono: { estilo: 'circulo', color: '#FFFFFF', relleno: 'rgba(255,255,255,0.05)', borde: 'rgba(120,175,235,0.85)' },
@@ -35,7 +35,7 @@ export const PLANTILLAS_02: Record<'neon-edge' | 'clean-hex' | 'cosmic-flow' | '
 
   // 12 · minimalismo geometrico: blanco perla, hexagonos en azul y morado, bloques pequenos, pieza editorial
   'clean-hex': {
-    id: 'clean-hex', nombre: 'CLEAN HEX', numero: 12, coleccion: 2, descripcion: 'Minimalismo geometrico con detalles hexagonales', familia: 'editorial',
+    id: 'clean-hex', nombre: 'CLEAN HEX', numero: 12, coleccion: 2, descripcion: 'Minimalismo geométrico con detalles hexagonales', familia: 'editorial',
     fondo: FONDO_PERLA, texto: '#0A0A0F', textoSec: '#555A6B', acento: [AZUL, MORADO],
     titulo: { ancla: 'start' },
     icono: { estilo: 'linea', color: AZUL, relleno: 'none', borde: 'none' },
@@ -77,7 +77,7 @@ export const PLANTILLAS_02: Record<'neon-edge' | 'clean-hex' | 'cosmic-flow' | '
 
   // 14 · elegancia por lineas: blanco perla, lineas verticales azules y moradas, composicion asimetrica con columna de texto a la derecha
   'minimal-stripes': {
-    id: 'minimal-stripes', nombre: 'MINIMAL STRIPES', numero: 14, coleccion: 2, descripcion: 'Lineas verticales y composicion asimetrica', familia: 'clasico',
+    id: 'minimal-stripes', nombre: 'MINIMAL STRIPES', numero: 14, coleccion: 2, descripcion: 'Líneas verticales y composición asimétrica', familia: 'clasico',
     fondo: FONDO_PERLA, texto: '#0A0A0F', textoSec: '#555A6B', acento: [AZUL, MORADO],
     titulo: { ancla: 'start' },
     icono: { estilo: 'linea', color: AZUL, relleno: 'none', borde: 'none' },
@@ -102,7 +102,7 @@ export const PLANTILLAS_02: Record<'neon-edge' | 'clean-hex' | 'cosmic-flow' | '
 
   // 15 · tecnologia estructurada: negro, cuadricula sutil, puntos y lineas azules y moradas, iconos lineales
   'black-grid': {
-    id: 'black-grid', nombre: 'BLACK GRID', numero: 15, coleccion: 2, descripcion: 'Cuadricula tecnica y precision', familia: 'centrado',
+    id: 'black-grid', nombre: 'BLACK GRID', numero: 15, coleccion: 2, descripcion: 'Cuadrícula técnica y precisión', familia: 'centrado',
     fondo: FONDO_NEGRO, texto: '#FFFFFF', textoSec: '#AEB6CA', acento: [AZUL_CL, MORADO_CL],
     titulo: { ancla: 'start' },
     icono: { estilo: 'linea', color: '#8FC6F5', relleno: 'none', borde: 'none' },
@@ -180,7 +180,7 @@ export const PLANTILLAS_02: Record<'neon-edge' | 'clean-hex' | 'cosmic-flow' | '
 
   // 19 · marco luminoso corporativo: negro, marco fino con degradado azul-morado, simetria premium
   'vision-frame': {
-    id: 'vision-frame', nombre: 'VISION FRAME', numero: 19, coleccion: 2, descripcion: 'Marco luminoso azul y morado, composicion simetrica', familia: 'centrado',
+    id: 'vision-frame', nombre: 'VISION FRAME', numero: 19, coleccion: 2, descripcion: 'Marco luminoso azul y morado, composición simétrica', familia: 'centrado',
     fondo: FONDO_NEGRO, texto: '#FFFFFF', textoSec: '#AEB6CA', acento: ['#FFFFFF', '#E6D2FA'],
     titulo: { ancla: 'start' },
     icono: { estilo: 'circulo', color: '#FFFFFF', relleno: 'rgba(255,255,255,0.05)', borde: 'rgba(140,190,240,0.85)' },
