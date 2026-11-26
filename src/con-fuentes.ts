@@ -19,6 +19,9 @@ import { renderPortada, renderCabecera, renderPie, type DatosPortada, type Datos
 export function incrustarFuentesSvg(svg: string): string { const i = svg.indexOf('>') + 1; return svg.slice(0, i) + cssFuentesIncrustadas() + svg.slice(i); }
 export const renderPortadaConFuentes = (d: DatosPortada, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderPortada(d, t, p));
 export const renderCabeceraConFuentes = (d: DatosCabecera, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderCabecera(d, t, p));
+import { renderComprobante, type DatosComprobante } from './comprobante/index.ts';
+/** Comprobante de compra (1.3.0): una pagina SVG por hoja, con las fuentes incrustadas (Chromium/Electron de Sistema PC). */
+export const renderComprobanteConFuentes = (d: DatosComprobante): string[] => renderComprobante(d).map(incrustarFuentesSvg);
 export const renderPieConFuentes = (d: DatosPie, t: TamanoPagina, p: PorPagina = 1): string => incrustarFuentesSvg(renderPie(d, t, p));
 
 // ── Catalogo BORDE A BORDE (0.9.0): portada y separador oscuros de hoja completa y pie translucido, con las mismas fuentes incrustadas ──
