@@ -2,10 +2,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  VERSION_MOTOR, PAGINA_BORDE, PIE_BORDE_ALTO, PX_POR_PT_BORDE, pxBorde, paginaBorde, rectCubrir, renderPortadaBorde, renderSeparadorBorde, renderPieBorde, portadaBordeEnlaces, portadaBordeZonas,
+  VERSION_MOTOR, PAGINA_BORDE, PIE_BORDE_ALTO, PX_POR_PT_BORDE, pxBorde, paginaBorde, rectCubrir, renderPortadaBorde, renderSeparadorBorde, portadaBordeEnlaces, portadaBordeZonas,
   separadorBordeZonas, capaTemaCatalogo, intersecta, medir, URL_SITIO, URL_INSTAGRAM, ASPECTO_IMAGEN, paginaDe, type TemaCtx,
 } from '../src/index.ts';
-import { renderPortadaBordeConFuentes, renderSeparadorBordeConFuentes, renderPieBordeConFuentes } from '../src/con-fuentes.ts';
+import { renderPortadaBordeConFuentes, renderSeparadorBordeConFuentes } from '../src/con-fuentes.ts';
 
 const NAV = (s: string | number): TemaCtx => ({ id: 'navidad', semilla: s, productoId: 'cat' });
 const ancho = (svg: string) => Number(/ width="(\d+)"/.exec(svg)![1]), alto = (svg: string) => Number(/ height="(\d+)"/.exec(svg)![1]), vb = (svg: string) => /viewBox="([^"]+)"/.exec(svg)![1];
@@ -19,10 +19,9 @@ test('pagina borde a borde: 810 × 1012,5 pt = 4:5 EXACTO (1080 × 1350 px a 96 
   assert.equal(PAGINA_BORDE.ancho / 0.75, 1080); assert.equal(PAGINA_BORDE.alto / 0.75, 1350, '1 px de la imagen = 0,75 pt = 1 px de pantalla al 100 %');
   assert.equal(PX_POR_PT_BORDE, 2); assert.equal(pxBorde(810), 1620); assert.equal(pxBorde(1012.5), 2025); assert.equal(pxBorde(PIE_BORDE_ALTO), 240);
 });
-test('geometria: la imagen ocupa TODA la hoja, sin margen; el pie es una franja pegada abajo DENTRO de la hoja', () => {
+test('geometria: la imagen ocupa TODA la hoja, sin margen y sin pie', () => {
   const g = paginaBorde();
   assert.deepEqual(g.imagen, { x: 0, y: 0, w: 810, h: 1012.5 }); assert.equal(g.margen, 0); assert.equal(g.bordeABorde, true); assert.equal(g.porPagina, 1); assert.equal(g.orientacion, 'vertical');
-  assert.deepEqual(g.pie, { x: 0, y: 1012.5 - PIE_BORDE_ALTO, w: 810, h: PIE_BORDE_ALTO }); assert.equal(g.pie.y + g.pie.h, g.alto); assert.ok(g.pie.h < g.alto / 6, 'el pie es sutil (menos de 1/6 de la hoja)');
 });
 test('no se rompe lo de Carta / A4: paginaDe sigue igual', () => { assert.deepEqual([paginaDe('carta').ancho, paginaDe('carta').alto], [612, 792]); assert.deepEqual(paginaDe('carta').imagenes, [{ x: 46, y: 70, w: 520, h: 650 }]); });
 
@@ -87,21 +86,6 @@ test('separador de categoria: nombres largos caben; y la Navidad no invade las z
   assert.notEqual(renderSeparadorBorde({ categoria: 'Fundas', tema: NAV('x') }), renderSeparadorBorde({ categoria: 'Fundas' }));
 });
 
-// ── pie translucido ──
-test('pie translucido: franja 810 × 120 SIN fondo opaco (degradado oscuro de 0 a 0,86 de opacidad)', () => {
-  const s = renderPieBorde({ pagina: 6, total: 7, fechaPrecios: '22 nov 2026' });
-  assert.equal(ancho(s), 1620); assert.equal(alto(s), 240); assert.equal(vb(s), `0 0 810 ${PIE_BORDE_ALTO}`);
-  const rects = [...s.matchAll(/<rect[^>]*>/g)].map((m) => m[0]); assert.equal(rects.length, 1, 'un solo rectangulo: el degradado'); assert.ok(/fill="url\(#bpieSombra\)"/.test(rects[0]) && /width="810" height="120"/.test(rects[0]));
-  const ops = [...s.matchAll(/stop-opacity="([\d.]+)"/g)].map((m) => Number(m[1])); assert.deepEqual(ops, [0, 0.46, 0.86], 'transparente arriba, oscuro sutil abajo'); assert.ok(ops.every((v, i) => i === 0 || v > ops[i - 1]));
-  assert.ok(!/<(image|circle|path)/.test(s) && !/background/i.test(s), 'nada mas que el degradado y el texto');
-});
-test('pie: numero «6 / 7», fecha de precios y enlaces; sin total solo el numero; sin fecha no hay linea', () => {
-  const t = textos(renderPieBorde({ pagina: 6, total: 7, fechaPrecios: '22 nov 2026' })); assert.deepEqual(t.sort(), ['6 / 7', 'Precios vigentes al 22 nov 2026'].sort(), 'solo la fecha y el numero: el sitio y Instagram ya vienen en la propia imagen');
-  assert.ok(textos(renderPieBorde({ pagina: 3 })).includes('3') && !textos(renderPieBorde({ pagina: 3 })).some((x) => /vigentes/.test(x)));
-  assert.ok(textos(renderPieBorde({ pagina: 9, total: 4 })).includes('9 / 9'), 'un total menor que la pagina se corrige (nunca «9 / 4»)'); assert.ok(textos(renderPieBorde({ pagina: 0 })).includes('1'), 'pagina minima 1');
-  const clar = renderPieBorde({ pagina: 1, total: 2 }).match(/fill="#FFFFFF"/g) || []; assert.ok(clar.length >= 1, 'el numero de pagina va en BLANCO sobre el degradado oscuro (legible sobre la imagen)');
-  assert.equal(renderPieBorde({ pagina: 2, total: 5, fechaPrecios: 'x' }), renderPieBorde({ pagina: 2, total: 5, fechaPrecios: 'x' }));
-});
 test('enlaces de la PORTADA: rectangulos sobre «visionsmart.app» y «@visionsmart.app», dentro de la hoja y uno junto al otro', () => {
   const d = { tipo: 'categoria' as const, titulo: 'Fundas', fecha: 'noviembre 2026' }, e = portadaBordeEnlaces(d), g = paginaBorde();
   for (const r of [e.sitio, e.instagram]) { assert.ok(r.x >= 0 && r.x + r.w <= g.ancho && r.y >= 0 && r.y + r.h <= g.alto, 'dentro de la hoja'); assert.ok(r.w > 40 && r.h > 10); assert.ok(r.y > g.alto * 0.9, 'abajo, donde esta el texto'); }
@@ -110,11 +94,18 @@ test('enlaces de la PORTADA: rectangulos sobre «visionsmart.app» y «@visionsm
   assert.ok(textos(renderPortadaBorde(d)).some((t) => t.includes('visionsmart.app')), 'el texto de la portada existe');
   assert.deepEqual(portadaBordeEnlaces(d), e, 'determinista');
 });
-test('el pie no tapa lo importante de la imagen: ocupa solo el ultimo 12 % de la hoja', () => { assert.ok(PIE_BORDE_ALTO / PAGINA_BORDE.alto < 0.12 + 1e-9); });
+test('1.2.0: el PDF ya NO tiene pie translucido: ni pieza SVG, ni rectangulo de pie en la geometria, ni «Precios vigentes» / «n / total» en ninguna pieza', async () => {
+  const idx = await import('../src/index.ts'), cf = await import('../src/con-fuentes.ts');
+  assert.ok(!('renderPieBorde' in idx) && !('renderPieBordeConFuentes' in cf), 'no existe el generador del pie translucido');
+  assert.ok(!('pie' in paginaBorde()), 'la hoja es la imagen sola: sin rectangulo de pie');
+  const piezas = [renderPortadaBorde({ tipo: 'categoria', titulo: 'Fundas', fecha: 'noviembre 2026' }), renderSeparadorBorde({ categoria: 'Fundas', cantidad: 3 })];
+  for (const s of piezas) { assert.ok(!/vigentes/i.test(s) && !/bpieSombra/.test(s) && !textos(s).some((t) => /^\d+( \/ \d+)?$/.test(t)), 'sin pie translucido ni numero de pagina'); }
+});
+test('1.2.0: la franja baja de 160 px de las plantillas 4:5 sigue reservada (R20) aunque el PDF ya no pinte pie', () => { assert.equal(PIE_BORDE_ALTO, 120); assert.ok(PIE_BORDE_ALTO / PAGINA_BORDE.alto < 0.12 + 1e-9); });
 
 // ── variantes con fuentes (Sistema PC / Chromium) ──
 test('variantes ...ConFuentes: el mismo SVG con las 3 fuentes incrustadas', () => {
-  for (const [con, sin] of [[renderPortadaBordeConFuentes({ tipo: 'categoria', titulo: 'X', fecha: 'f' }), renderPortadaBorde({ tipo: 'categoria', titulo: 'X', fecha: 'f' })], [renderSeparadorBordeConFuentes({ categoria: 'X' }), renderSeparadorBorde({ categoria: 'X' })], [renderPieBordeConFuentes({ pagina: 1 }), renderPieBorde({ pagina: 1 })]]) {
+  for (const [con, sin] of [[renderPortadaBordeConFuentes({ tipo: 'categoria', titulo: 'X', fecha: 'f' }), renderPortadaBorde({ tipo: 'categoria', titulo: 'X', fecha: 'f' })], [renderSeparadorBordeConFuentes({ categoria: 'X' }), renderSeparadorBorde({ categoria: 'X' })]]) {
     assert.ok(con.length > sin.length + 100000, 'trae las fuentes'); assert.match(con, /@font-face/); assert.equal((con.match(/@font-face/g) || []).length, 3); assert.equal(ancho(con), ancho(sin)); assert.ok(con.endsWith('</svg>'));
   }
 });

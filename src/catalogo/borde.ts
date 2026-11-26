@@ -5,11 +5,11 @@
  * PAGINA: 810 × 1012,5 pt = proporcion EXACTA 4:5. Es el tamaño de una imagen 1080 × 1350 px a 96 dpi (1 px de la imagen = 0,75 pt = 1 px de pantalla al 100 %),
  *   asi que la imagen del Generador cabe sin deformarse ni recortarse. Origen ARRIBA-IZQUIERDA, unidades en pt (como PDFKit y como SVG).
  *
- * PIEZAS (SVG):
+ * PIEZAS (SVG; desde 1.2.0 las hojas internas NO llevan pie: son la imagen sola):
  *   · PORTADA y SEPARADOR de categoria: hoja completa, fondo OSCURO de marca (sin banda blanca). Opacos.
- *   · PIE: una franja TRANSLUCIDA (degradado oscuro sutil, tipo «pie de cine») que va ENCIMA de la parte baja de la imagen con la fecha de los precios
- *     y el numero de pagina («6 / 7»). NO repite el sitio ni Instagram: las imagenes del Generador ya los traen en su propio pie (los enlaces clicables del PDF van en la portada). El SVG NO tiene fondo opaco: hay que rasterizarlo con transparencia (PNG con canal alfa) y ponerlo sobre la imagen.
- *   · TAMAÑO DEL SVG: viewBox en pt de la pagina y width/height en PIXELES a 2 px por pt (portada 1620 × 2025; pie 1620 × 240): es el tamaño al que se rasteriza.
+ *   · (1.2.0) Se ELIMINO el pie translucido («Precios vigentes al…» + «n / total») que iba sobre la parte baja de cada imagen: cortaba la ilusion de una sola imagen continua.
+ *     La fecha de los precios queda SOLO en la portada; los enlaces clicables tambien.
+ *   · TAMAÑO DEL SVG: viewBox en pt de la pagina y width/height en PIXELES a 2 px por pt (portada 1620 × 2025): es el tamaño al que se rasteriza.
  * IMAGENES QUE NO SON 4:5 (1:1, 9:16): «cubrir» (rectCubrir): se agrandan hasta llenar la hoja y se recorta lo que sobra, centradas; nunca hay bandas.
  * FUENTES: igual que 0.8.0 (Jakarta-*; Sistema PC usa las variantes ...ConFuentes de con-fuentes.ts).
  */
@@ -23,7 +23,10 @@ import { COLORES_CATALOGO, TEXTO_SITIO, TEXTO_INSTAGRAM, SEPARADOR_PIE, lockup, 
 
 /** Pagina borde a borde: proporcion 4:5 exacta (1080 × 1350 px a 96 dpi). */
 export const PAGINA_BORDE = { ancho: 810, alto: 1012.5 } as const;
-/** Alto de la franja del pie (translucida) sobre la parte baja de la imagen. */
+/**
+ * Franja baja RESERVADA en las imagenes 4:5 (120 pt de 1012,5 = 160 px de 1350): las plantillas (R20) no ponen contenido ahi, solo su propio pie centrado.
+ * Desde 1.2.0 el PDF ya NO pinta ningun pie translucido encima (las hojas internas son la imagen sola): la constante queda solo como contrato de las plantillas.
+ */
 export const PIE_BORDE_ALTO = 120;
 /** Pixeles por punto al rasterizar las piezas borde a borde (2 px/pt: portada 1620 × 2025). */
 export const PX_POR_PT_BORDE = 2;
@@ -37,13 +40,11 @@ export type PaginaBordeGeo = {
   tamano: 'borde'; porPagina: 1; orientacion: 'vertical'; ancho: number; alto: number; bordeABorde: true; margen: 0;
   /** La imagen ocupa TODA la hoja. */
   imagen: Rect;
-  /** Franja del pie (translucida) sobre la imagen, pegada abajo. */
-  pie: Rect;
 };
 /** Geometria de la pagina borde a borde. */
 export function paginaBorde(): PaginaBordeGeo {
   const { ancho, alto } = PAGINA_BORDE;
-  return { tamano: 'borde', porPagina: 1, orientacion: 'vertical', ancho, alto, bordeABorde: true, margen: 0, imagen: { x: 0, y: 0, w: ancho, h: alto }, pie: { x: 0, y: alto - PIE_BORDE_ALTO, w: ancho, h: PIE_BORDE_ALTO } };
+  return { tamano: 'borde', porPagina: 1, orientacion: 'vertical', ancho, alto, bordeABorde: true, margen: 0, imagen: { x: 0, y: 0, w: ancho, h: alto } };
 }
 
 /**
@@ -60,7 +61,6 @@ export function rectCubrir(anchoPx: number, altoPx: number): Rect {
 
 export type DatosPortadaBorde = { tipo: 'categoria' | 'inventario'; titulo?: string; fecha: string; tema?: TemaCtx | null };
 export type DatosSeparadorBorde = { categoria: string; cantidad?: number | null; tema?: TemaCtx | null };
-export type DatosPieBorde = { pagina: number; total?: number | null; fechaPrecios?: string | null };
 
 /** Envoltura: viewBox en pt, width/height en px (2 px/pt). */
 function svgBorde(wPt: number, hPt: number, defs: string, cuerpo: string): string {
@@ -143,18 +143,3 @@ export function renderSeparadorBorde(datos: DatosSeparadorBorde): string {
   const p = separadorInterno(datos), capa = capaTemaCatalogo(datos.tema, p.W, p.H, p.zonas, 'catalogo-borde-separador');
   return svgBorde(p.W, p.H, p.defs, p.cuerpo + capa.svg);
 }
-
-// ── PIE translucido sobre la imagen ─────────────────────────────────────────────
-const MX_PIE = 40, TAM_FECHA = 15, TAM_NUM = 26;
-function pieInterno(datos: DatosPieBorde) {
-  const W = PAGINA_BORDE.ancho, H = PIE_BORDE_ALTO, yFecha = H - 34, yNum = H - 34;
-  const pag = Math.max(1, Math.round(Number(datos.pagina) || 1)), total = Number(datos.total) > 0 ? Math.max(pag, Math.round(Number(datos.total))) : 0;
-  const num = total ? `${pag} / ${total}` : String(pag);
-  const fecha = datos.fechaPrecios ? `Precios vigentes al ${datos.fechaPrecios}` : '';
-  const defs = `<linearGradient id="bpieSombra" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"/><stop offset="0.5" stop-color="#000000" stop-opacity="0.46"/><stop offset="1" stop-color="#000000" stop-opacity="0.86"/></linearGradient>`;
-  let cuerpo = `<rect x="0" y="0" width="${n(W)}" height="${n(H)}" fill="url(#bpieSombra)"/>` + texto(W - MX_PIE, yNum, TAM_NUM, F.extrabold, COLORES_BORDE.texto, num, 'end');
-  if (fecha) cuerpo += texto(MX_PIE, yFecha, TAM_FECHA, F.bold, COLORES_BORDE.claro, fecha);
-  return { defs, cuerpo, W, H };
-}
-/** Pie TRANSLUCIDO (sin fondo opaco): rasterizar con transparencia y poner sobre la parte baja de la imagen (paginaBorde().pie). */
-export function renderPieBorde(datos: DatosPieBorde): string { const p = pieInterno(datos); return svgBorde(p.W, p.H, p.defs, p.cuerpo); }
