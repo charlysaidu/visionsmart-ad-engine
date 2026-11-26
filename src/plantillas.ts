@@ -4,13 +4,13 @@ import type { DatosProducto } from './datos.ts';
 // Las 10 plantillas del motor 1.0.0 como CONFIGURACION (JSON puro): paleta, tratamientos y CAPAS decorativas propias.
 // La disposicion 4:5 de cada una vive en layouts.ts, y el dibujo en primitivas.ts / capas.ts.
 // Paleta corporativa: azul #1367A4, morado #9D3FCB, blanco perla #F4F1EA, negro #000000 (+ tonos claros de los dos primeros para luces sobre fondos oscuros).
-const AZUL = '#1367A4', MORADO = '#9D3FCB', PERLA = '#F4F1EA';
-const AZUL_CL = '#3FA0E8', MORADO_CL = '#C072E8';          // versiones luminosas para trazos y luces sobre negro
+import { AZUL, AZUL_CL, MORADO, MORADO_CL, PERLA } from './paleta.ts';
+import { PLANTILLAS_02 } from './plantillas-02.ts';
 
-export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
+const PLANTILLAS_01: Record<Exclude<PlantillaId, keyof typeof PLANTILLAS_02>, Plantilla> = {
   // 01 · tecnologia premium sobre negro absoluto: iluminacion ambiental azul y morada, producto grande, boton de degradado
   'black-premium': {
-    id: 'black-premium', nombre: 'BLACK PREMIUM', familia: 'clasico',
+    id: 'black-premium', nombre: 'BLACK PREMIUM', familia: 'clasico', numero: 1, coleccion: 1, descripcion: 'Negro absoluto, luz azul y morada y boton de degradado',
     fondo: { angulo: 90, paradas: [[0, '#000000'], [1, '#000000']] },
     texto: '#F4F1EA', textoSec: '#A7ADBD',
     acento: [AZUL_CL, MORADO_CL],
@@ -33,7 +33,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 02 · minimalismo limpio: blanco perla, mucho espacio negativo, detalles pequenos en azul y morado
   'pure-white': {
-    id: 'pure-white', nombre: 'PURE WHITE', familia: 'centrado',
+    id: 'pure-white', nombre: 'PURE WHITE', familia: 'centrado', numero: 2, coleccion: 1, descripcion: 'Minimalismo limpio sobre blanco perla',
     fondo: { angulo: 90, paradas: [[0, PERLA], [1, PERLA]] },
     texto: '#0A0A0F', textoSec: '#5B5F6E',
     acento: ['#0A0A0F', '#0A0A0F'],
@@ -56,7 +56,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 03 · identidad azul tecnologica: fondo azul corporativo, luz azul alrededor del producto, formas geometricas, detalles morados
   'blue-signature': {
-    id: 'blue-signature', nombre: 'BLUE SIGNATURE', familia: 'clasico',
+    id: 'blue-signature', nombre: 'BLUE SIGNATURE', familia: 'clasico', numero: 3, coleccion: 1, descripcion: 'La identidad azul de VisionSmart',
     fondo: { angulo: 70, paradas: [[0, '#1670AE'], [0.55, AZUL], [1, '#0E5287']] },
     texto: '#FFFFFF', textoSec: '#D6E8F7',
     acento: ['#FFFFFF', '#EBD3F8'],
@@ -81,7 +81,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 04 · elegancia morada: fondo #9D3FCB, plataforma para el producto, detalles azules discretos, minimalista
   'purple-edition': {
-    id: 'purple-edition', nombre: 'PURPLE EDITION', familia: 'centrado',
+    id: 'purple-edition', nombre: 'PURPLE EDITION', familia: 'centrado', numero: 4, coleccion: 1, descripcion: 'Elegancia morada con plataforma',
     fondo: { angulo: 90, paradas: [[0, MORADO], [1, MORADO]] },
     texto: '#FFFFFF', textoSec: '#F3E6FB',
     acento: ['#FFFFFF', '#FFFFFF'],
@@ -105,7 +105,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 05 · protagonismo del degradado oficial azul -> morado, formas de luz y profundidad
   'gradient-experience': {
-    id: 'gradient-experience', nombre: 'GRADIENT EXPERIENCE', familia: 'centrado',
+    id: 'gradient-experience', nombre: 'GRADIENT EXPERIENCE', familia: 'centrado', numero: 5, coleccion: 1, descripcion: 'El degradado oficial azul a morado',
     fondo: { angulo: 55, paradas: [[0, AZUL], [1, MORADO]] },
     texto: '#FFFFFF', textoSec: '#F0E8FA',
     acento: ['#FFFFFF', '#FFFFFF'],
@@ -131,7 +131,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 06 · fotografia publicitaria: negro, el producto lo es todo, luz de estudio, reflejo y plataforma luminosa
   'product-spotlight': {
-    id: 'product-spotlight', nombre: 'PRODUCT SPOTLIGHT', familia: 'centrado',
+    id: 'product-spotlight', nombre: 'PRODUCT SPOTLIGHT', familia: 'centrado', numero: 6, coleccion: 1, descripcion: 'Foto de estudio: el producto lo es todo',
     fondo: { angulo: 90, paradas: [[0, '#02030A'], [0.55, '#05091A'], [1, '#010207']] },
     texto: '#FFFFFF', textoSec: '#A9B6D2',
     acento: ['#FFFFFF', '#C9DDFF'],
@@ -156,7 +156,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 07 · revista tecnologica: blanco perla, tipografia grande y jerarquizada, distribucion asimetrica, tarjetas pequenas
   'tech-editorial': {
-    id: 'tech-editorial', nombre: 'TECH EDITORIAL', familia: 'editorial',
+    id: 'tech-editorial', nombre: 'TECH EDITORIAL', familia: 'editorial', numero: 7, coleccion: 1, descripcion: 'Revista tecnologica, tipografia grande',
     fondo: { angulo: 90, paradas: [[0, PERLA], [1, PERLA]] },
     texto: '#0A0A0F', textoSec: '#555A6B',
     acento: [AZUL, MORADO],
@@ -180,7 +180,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 08 · superficies translucidas: negro azulado, paneles de cristal con borde azul-morado, reflejos suaves
   'modern-glass': {
-    id: 'modern-glass', nombre: 'MODERN GLASS', familia: 'clasico',
+    id: 'modern-glass', nombre: 'MODERN GLASS', familia: 'clasico', numero: 8, coleccion: 1, descripcion: 'Paneles de cristal sobre azul oscuro',
     fondo: { angulo: 90, paradas: [[0, '#060A1C'], [1, '#0A1030']] },
     texto: '#F4F6FF', textoSec: '#AAB4D8',
     acento: ['#6CB7F5', '#C58CF0'],
@@ -206,7 +206,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 09 · energia y movimiento: negro, bandas diagonales azul y morada, producto inclinado, tipografia contundente
   'dynamic-tech': {
-    id: 'dynamic-tech', nombre: 'DYNAMIC TECH', familia: 'centrado',
+    id: 'dynamic-tech', nombre: 'DYNAMIC TECH', familia: 'centrado', numero: 9, coleccion: 1, descripcion: 'Energia y movimiento en diagonal',
     fondo: { angulo: 90, paradas: [[0, '#000000'], [1, '#02040C']] },
     texto: '#FFFFFF', textoSec: '#B5C2EE',
     acento: ['#35C6FF', MORADO_CL],
@@ -231,7 +231,7 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
 
   // 10 · lujo minimalista: la mas sobria; blanco perla (o negro segun el producto), detalles corporativos muy discretos
   'luxury-minimal': {
-    id: 'luxury-minimal', nombre: 'LUXURY MINIMAL', familia: 'editorial',
+    id: 'luxury-minimal', nombre: 'LUXURY MINIMAL', familia: 'editorial', numero: 10, coleccion: 1, descripcion: 'La mas sobria: perla o negro',
     fondo: { angulo: 90, paradas: [[0, PERLA], [1, PERLA]] },
     texto: '#0A0A0F', textoSec: '#4A4F5E',
     acento: ['#0A0A0F', '#0A0A0F'],
@@ -250,6 +250,9 @@ export const PLANTILLAS: Record<PlantillaId, Plantilla> = {
     logo: 'oscuro', pie: '#8A8FA3',
   },
 };
+
+// Las 20: la coleccion 01 intacta + la coleccion 02 (11-20)
+export const PLANTILLAS: Record<PlantillaId, Plantilla> = { ...PLANTILLAS_01, ...PLANTILLAS_02 };
 
 export const IDS_PLANTILLAS = Object.keys(PLANTILLAS) as PlantillaId[];
 

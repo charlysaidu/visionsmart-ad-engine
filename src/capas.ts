@@ -43,7 +43,8 @@ export function cajaDeZona(d: Dibujo, ref: RefPanel): Caja {
 /** Una capa decorativa -> SVG. Deterministas: sin azar ni reloj. */
 export function capa(d: Dibujo, c: Capa): string {
   const esc1 = d.W / 1080;                                       // escala de las medidas en px definidas para el 4x5
-  if (c.solo === '4x5' && Math.abs(d.H / d.W - 1.25) > 1e-6) return '';
+  const es45 = Math.abs(d.H / d.W - 1.25) < 1e-6;
+  if ((c.solo === '4x5' && !es45) || (c.solo === 'otros' && es45)) return '';
   switch (c.t) {
     case 'luz': {
       const R = refCaja(d, c.ref), id = nid(d, 'luz');
@@ -99,6 +100,39 @@ export function capa(d: Dibujo, c: Capa): string {
       return `<rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" rx="${c.rx}" fill="${c.relleno}" fill-opacity="${n(c.opRelleno)}" stroke="${fillGrad(gb)}" stroke-opacity="${n(c.opBorde)}" stroke-width="2.2"/>` +
         `<rect x="${n(x + 2)}" y="${n(y + 2)}" width="${n(w - 4)}" height="${n(h * 0.5)}" rx="${Math.max(4, c.rx - 2)}" fill="${fillGrad(gr)}"/>` +
         `<rect x="${n(x + 6)}" y="${n(y + 6)}" width="${n(w - 12)}" height="${n(h - 12)}" rx="${Math.max(4, c.rx - 6)}" fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="1.2"/>`;
+    }
+    case 'onda': {
+      // senoide muestreada cada ~27 px: trazo con degradado de marca y, si se pide, area teñida que se desvanece hacia abajo / arriba
+      const y0 = c.y * d.H, A = c.amp * d.H, L = Math.max(60, c.largo * d.W), ph = (c.fase ?? 0) * 2 * Math.PI, N = Math.ceil((d.W + 80) / 27), pts: string[] = [];
+      for (let i = 0; i <= N; i++) { const x = -40 + (i * (d.W + 80)) / N; pts.push(`${n(x)} ${n(y0 + A * Math.sin((2 * Math.PI * x) / L + ph))}`); }
+      const gs = nid(d, 'on'); d.defs.push(gradColores(gs, c.color, 0));
+      let out = '';
+      if (c.relleno) {
+        const gr = nid(d, 'or'), col = c.color[Math.floor(c.color.length / 2)], abajo = c.relleno === 'abajo';
+        d.defs.push(gradLineal(gr, { angulo: 90, paradas: [[0, col, abajo ? (c.opRelleno ?? 0.25) : 0], [1, col, abajo ? 0 : (c.opRelleno ?? 0.25)]] }));
+        const borde = abajo ? Math.min(d.H + 10, y0 + A + d.H * 0.22) : Math.max(-10, y0 - A - d.H * 0.22);
+        out += `<path d="M${pts.join(' L')} L${n(d.W + 40)} ${n(borde)} L-40 ${n(borde)} Z" fill="${fillGrad(gr)}"/>`;
+      }
+      return out + `<path d="M${pts.join(' L')}" fill="none" stroke="${fillGrad(gs)}" stroke-opacity="${n(c.op)}" stroke-width="${c.grosor ?? 3}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }
+    case 'rejilla': {
+      const paso = c.paso * esc1, x0 = c.x0 * d.W, x1 = c.x1 * d.W, y0 = c.y0 * d.H, y1 = c.y1 * d.H, seg: string[] = [];
+      for (let x = x0; x <= x1 + 0.1; x += paso) seg.push(`M${n(x)} ${n(y0)} L${n(x)} ${n(y1)}`);
+      for (let y = y0; y <= y1 + 0.1; y += paso) seg.push(`M${n(x0)} ${n(y)} L${n(x1)} ${n(y)}`);
+      return `<path d="${seg.join(' ')}" fill="none" stroke="${c.color}" stroke-opacity="${n(c.op)}" stroke-width="${c.grosor ?? 1}"/>`;
+    }
+    case 'hex': {
+      const R = refCaja(d, c.ref), cx = R.x + c.x * R.w, cy = R.y + c.y * R.h, r = c.r * R.w, pts: string[] = [];
+      for (let k = 0; k < 6; k++) { const a = ((c.rot ?? 0) + 60 * k - 90) * (Math.PI / 180); pts.push(`${n(cx + r * Math.cos(a))},${n(cy + r * Math.sin(a))}`); }
+      let trazo = '';
+      if (c.trazo) { const gh = nid(d, 'hx'); d.defs.push(gradColores(gh, c.trazo, 45)); trazo = ` stroke="${fillGrad(gh)}" stroke-opacity="${n(c.opTrazo ?? 0.7)}" stroke-width="${c.grosor ?? 2}" stroke-linejoin="round"`; }
+      return `<polygon points="${pts.join(' ')}" fill="${c.relleno ?? 'none'}" fill-opacity="${n(c.relleno ? (c.opRelleno ?? 0.08) : 0)}"${trazo}/>`;
+    }
+    case 'borde': {
+      const i = c.inset * esc1, y1 = c.hasta != null ? c.hasta * (d.H / 1350) : d.H - i, gb = nid(d, 'bf'); d.defs.push(gradColores(gb, c.color, 45));
+      const g = c.grosor ?? 2;
+      return `<rect x="${n(i)}" y="${n(i)}" width="${n(d.W - 2 * i)}" height="${n(y1 - i)}" rx="${c.rx}" fill="none" stroke="${fillGrad(gb)}" stroke-opacity="${n(c.op * 0.2)}" stroke-width="${g * 6}"/>` +
+        `<rect x="${n(i)}" y="${n(i)}" width="${n(d.W - 2 * i)}" height="${n(y1 - i)}" rx="${c.rx}" fill="none" stroke="${fillGrad(gb)}" stroke-opacity="${n(c.op)}" stroke-width="${g}"/>`;
     }
     case 'piso': {
       // aro de piso bajo el producto: resplandor + dos aros luminosos con el degradado de marca (plataforma ligera de estudio)

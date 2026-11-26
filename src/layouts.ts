@@ -97,7 +97,7 @@ const BASE: Record<Familia, (f: Formato) => Layout> = {
 const PIE45 = { x: 540, y: 1310, ancla: 'middle' as Ancla };
 export const LIMITE_CONTENIDO_4X5 = 1190;
 
-const D45: Record<PlantillaId, Layout> = {
+const D45: Partial<Record<PlantillaId, Layout>> = {
   // 01 · columna de texto a la izquierda, producto grande a la derecha, precio abajo y boton de garantia
   'black-premium': {
     logo: { x: 60, y: 62, h: 56, ancla: 'start' },
@@ -210,14 +210,131 @@ const D45: Record<PlantillaId, Layout> = {
   },
 };
 
+// ── COLECCION 02 (11-20) ──
+Object.assign(D45, {
+  // 11 · espejo: titulo y precio a la derecha, producto a la izquierda, lista en columna derecha, boton de garantia a la izquierda
+  'neon-edge': {
+    logo: { x: 60, y: 62, h: 56, ancla: 'start' },
+    titulo: { x: 1020, y: 238, ancho: 760, ancla: 'end', tamMax: 84, tamMin: 34 },
+    lista: { x: 704, y: 470, ancho: 316, modo: 'columna', paso: 150, cantidad: 3, tam: 24, icono: 58 },
+    foto: { x: 50, y: 352, w: 640, h: 600 },
+    podio: { cx: 370, cy: 910, rx: 270, ry: 50, alto: 36 },
+    precio: { x: 1020, y: 1150, ancho: 560, ancla: 'end', tam: 104 },
+    garantia: { x: 60, y: 1062, w: 290, h: 92 },
+    pie: PIE45,
+  },
+  // 12 · cuadrantes: titulo arriba a la izquierda, producto a la derecha, bloques 2x2 abajo a la izquierda, precio abajo a la derecha
+  'clean-hex': {
+    logo: { x: 60, y: 62, h: 52, ancla: 'start' },
+    titulo: { x: 60, y: 238, ancho: 540, ancla: 'start', tamMax: 76, tamMin: 34 },
+    lista: { x: 60, y: 1010, ancho: 548, modo: 'rejilla', paso: 100, pasoY: 88, cantidad: 4, tam: 19, icono: 38, bloque: true },
+    foto: { x: 300, y: 320, w: 732, h: 640 },
+    podio: { cx: 666, cy: 960, rx: 280, ry: 40, alto: 30 },
+    precio: { x: 1020, y: 1150, ancho: 400, ancla: 'end', tam: 84 },
+    garantia: { x: 60, y: 880, w: 220, h: 70 },
+    pie: PIE45,
+  },
+  // 13 · titulo arriba, producto central, precio a la izquierda y fila de caracteristicas debajo; garantia arriba a la derecha
+  'cosmic-flow': {
+    logo: { x: 60, y: 62, h: 56, ancla: 'start' },
+    titulo: { x: 60, y: 238, ancho: 700, ancla: 'start', tamMax: 84, tamMin: 34 },
+    lista: { x: 60, y: 1140, ancho: 960, modo: 'fila', paso: 320, cantidad: 3, tam: 20, icono: 40 },
+    foto: { x: 230, y: 340, w: 800, h: 600 },
+    podio: { cx: 630, cy: 940, rx: 300, ry: 40, alto: 30 },
+    precio: { x: 60, y: 1098, ancho: 560, ancla: 'start', tam: 88 },
+    garantia: { x: 790, y: 56, w: 230, h: 76 },
+    pie: PIE45,
+  },
+  // 14 · asimetrica: producto a la izquierda; columna de texto estrecha a la derecha (titulo, caracteristicas, precio)
+  'minimal-stripes': {
+    logo: { x: 60, y: 62, h: 52, ancla: 'start' },
+    titulo: { x: 702, y: 238, ancho: 330, ancla: 'start', tamMax: 56, tamMin: 30 },
+    lista: { x: 702, y: 540, ancho: 330, modo: 'columna', paso: 112, cantidad: 3, tam: 22, icono: 46 },
+    foto: { x: 48, y: 300, w: 640, h: 700 },
+    podio: { cx: 368, cy: 1000, rx: 270, ry: 40, alto: 30 },
+    precio: { x: 702, y: 1150, ancho: 330, ancla: 'start', tam: 66 },
+    garantia: { x: 60, y: 1040, w: 260, h: 80 },
+    pie: PIE45,
+  },
+  // 15 · producto arriba, titulo a la izquierda y precio a la derecha, fila de caracteristicas con iconos lineales abajo
+  'black-grid': {
+    logo: { x: 60, y: 62, h: 56, ancla: 'start' },
+    titulo: { x: 60, y: 880, ancho: 560, ancla: 'start', tamMax: 56, tamMin: 30 },
+    lista: { x: 60, y: 1140, ancho: 960, modo: 'fila', paso: 320, cantidad: 3, tam: 21, icono: 40 },
+    foto: { x: 150, y: 170, w: 780, h: 640 },
+    podio: { cx: 540, cy: 810, rx: 300, ry: 40, alto: 30 },
+    precio: { x: 1020, y: 1098, ancho: 460, ancla: 'end', tam: 84 },
+    garantia: { x: 790, y: 56, w: 230, h: 76 },
+    pie: PIE45,
+  },
+  // 16 · escenario sereno: titulo centrado arriba, producto grande al centro, garantia a la izquierda y precio a la derecha
+  'pearl-wave': {
+    logo: { x: 60, y: 62, h: 52, ancla: 'start' },
+    titulo: { x: 540, y: 205, ancho: 860, ancla: 'middle', tamMax: 62, tamMin: 36 },
+    lista: { x: 60, y: 560, ancho: 320, modo: 'columna', paso: 120, cantidad: 0, tam: 24, icono: 54 },
+    foto: { x: 110, y: 330, w: 860, h: 620 },
+    podio: { cx: 540, cy: 950, rx: 330, ry: 40, alto: 30 },
+    precio: { x: 1020, y: 1160, ancho: 520, ancla: 'end', tam: 94 },
+    garantia: { x: 60, y: 1078, w: 260, h: 86 },
+    pie: PIE45,
+  },
+  // 17 · secciones: titulo sobre negro/azul, producto sobre la banda azul cruzando a la base morada con precio y garantia
+  'dual-tone': {
+    logo: { x: 60, y: 62, h: 56, ancla: 'start' },
+    titulo: { x: 60, y: 238, ancho: 900, ancla: 'start', tamMax: 70, tamMin: 34 },
+    lista: { x: 60, y: 560, ancho: 320, modo: 'columna', paso: 120, cantidad: 0, tam: 24, icono: 54 },
+    foto: { x: 110, y: 330, w: 860, h: 620 },
+    podio: { cx: 540, cy: 940, rx: 330, ry: 40, alto: 30 },
+    precio: { x: 60, y: 1150, ancho: 540, ancla: 'start', tam: 100 },
+    garantia: { x: 730, y: 1062, w: 290, h: 92 },
+    pie: PIE45,
+  },
+  // 18 · editorial informativa: titulo ancho, producto en tarjeta a la izquierda, bloques de datos reales a la derecha, precio abajo
+  'info-box': {
+    logo: { x: 60, y: 62, h: 52, ancla: 'start' },
+    titulo: { x: 60, y: 238, ancho: 960, ancla: 'start', tamMax: 66, tamMin: 34 },
+    lista: { x: 650, y: 440, ancho: 370, modo: 'columna', paso: 100, cantidad: 4, tam: 21, icono: 42, bloque: true, soloReales: true },
+    foto: { x: 60, y: 420, w: 540, h: 540 },
+    podio: { cx: 330, cy: 960, rx: 220, ry: 30, alto: 24 },
+    precio: { x: 60, y: 1150, ancho: 560, ancla: 'start', tam: 92 },
+    garantia: { x: 650, y: 1062, w: 370, h: 90 },
+    pie: PIE45,
+  },
+  // 19 · simetrica dentro del marco: logo, titulo, producto, precio y garantia centrados
+  'vision-frame': {
+    logo: { x: 540, y: 66, h: 50, ancla: 'middle' },
+    titulo: { x: 540, y: 215, ancho: 820, ancla: 'middle', tamMax: 60, tamMin: 34 },
+    lista: { x: 60, y: 560, ancho: 320, modo: 'columna', paso: 120, cantidad: 0, tam: 24, icono: 54 },
+    foto: { x: 160, y: 320, w: 760, h: 570 },
+    podio: { cx: 540, cy: 890, rx: 300, ry: 36, alto: 26 },
+    precio: { x: 540, y: 1030, ancho: 540, ancla: 'middle', tam: 92 },
+    garantia: { x: 415, y: 1092, w: 250, h: 70 },
+    pie: PIE45,
+  },
+  // 20 · diagonal: titulo en el bloque negro, lista y precio sobre el perla, producto cruzando el corte
+  'diagonal-split': {
+    logo: { x: 60, y: 62, h: 56, ancla: 'start' },
+    titulo: { x: 60, y: 238, ancho: 900, ancla: 'start', tamMax: 72, tamMin: 34 },
+    lista: { x: 60, y: 600, ancho: 280, modo: 'columna', paso: 110, cantidad: 3, tam: 22, icono: 48 },
+    foto: { x: 340, y: 420, w: 692, h: 640 },
+    podio: { cx: 686, cy: 1060, rx: 280, ry: 36, alto: 26 },
+    precio: { x: 60, y: 1150, ancho: 520, ancla: 'start', tam: 92 },
+    garantia: { x: 60, y: 892, w: 250, h: 76 },
+    pie: PIE45,
+  },
+});
+
 /** Caracteristicas visibles segun la plantilla en 1x1 y 9x16 (las plantillas minimalistas muestran menos). */
-const CANTIDAD_LISTA: Partial<Record<PlantillaId, number>> = { 'purple-edition': 0, 'gradient-experience': 0, 'product-spotlight': 0, 'luxury-minimal': 0 };
+const CANTIDAD_LISTA: Partial<Record<PlantillaId, number>> = { 'purple-edition': 0, 'gradient-experience': 0, 'product-spotlight': 0, 'luxury-minimal': 0, 'pearl-wave': 0, 'dual-tone': 0, 'vision-frame': 0 };
+/** Plantillas cuyas caracteristicas son solo datos reales del inventario (sin frases de relleno). */
+const SOLO_REALES: ReadonlySet<PlantillaId> = new Set<PlantillaId>(['info-box']);
 
 /** Layout de una plantilla para un formato: el 4:5 es la disposicion propia de la plantilla; 1x1 y 9x16 salen de su familia. */
 export function layoutDe(p: Plantilla, f: Formato): Layout {
-  if (f === '4x5') return clon(D45[p.id]);
+  if (f === '4x5') return clon(D45[p.id]!);
   const l = BASE[p.familia](f);
   if (CANTIDAD_LISTA[p.id] != null) l.lista.cantidad = CANTIDAD_LISTA[p.id]!;
+  if (SOLO_REALES.has(p.id)) l.lista.soloReales = true;
   if (p.familia === 'centrado' && p.titulo.ancla === 'start') {
     // titulo a la izquierda y logo a la derecha (espejo del layout base)
     l.titulo.x = 60; l.titulo.ancla = 'start';

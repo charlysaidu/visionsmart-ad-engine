@@ -32,7 +32,7 @@ test('sin tema (ausente o null) la salida coincide con las huellas 1.0.0 en 10 p
       assert.equal(createHash('sha256').update(svg).digest('hex'), esperado, `${id}|${f}|${k}|tema=${tema}`); n++;
     }
   }
-  assert.equal(n, 300);
+  assert.equal(n, IDS_PLANTILLAS.length * 3 * 5 * 2);
 });
 
 const ETQ_OK = new Set(['svg', 'defs', 'linearGradient', 'radialGradient', 'stop', 'rect', 'circle', 'ellipse', 'path', 'polygon', 'polyline', 'line', 'g', 'text', 'tspan', 'image']);

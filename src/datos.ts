@@ -45,7 +45,7 @@ function primeraFrase(desc: string | null | undefined): string {
  * Hasta `max` caracteristicas con datos REALES del producto (descripcion, conector, potencia, marcas, tipo); se completan con
  * genericos que no prometen nada que el producto no tenga. Cada una: icono + 1-2 lineas cortas.
  */
-export function caracteristicasDe(p: DatosProducto, max = 3): Caracteristica[] {
+export function caracteristicasDe(p: DatosProducto, max = 3, soloReales = false): Caracteristica[] {
   const out: Caracteristica[] = [];
   const texto = sinTildes(`${p.nombre} ${p.descripcion ?? ''}`).toLowerCase();
   const cat = categoriaDe(p);
@@ -58,12 +58,14 @@ export function caracteristicasDe(p: DatosProducto, max = 3): Caracteristica[] {
   const marcas = (Array.isArray(p.marcas) ? p.marcas : typeof p.marcas === 'string' ? [p.marcas] : []).filter((m) => m && m.toLowerCase() !== 'todas');
   if (marcas.length) out.push({ icono: 'telefono', lineas: ['Compatible', marcas[0].toLocaleUpperCase('es')] });
   else if (/iphone/.test(texto)) out.push({ icono: 'telefono', lineas: ['Compatible', 'iPhone'] });
+  if (!soloReales) {
   if (cat === 'audifono') out.push({ icono: 'audio', lineas: ['Sonido', 'envolvente'] });
   if (cat === 'vidrio') out.push({ icono: 'diamante', lineas: ['Alta', 'dureza'] });
   if (cat === 'forro') out.push({ icono: 'escudo', lineas: ['Protección', 'total'] });
   if (cat === 'cable') out.push({ icono: 'carga', lineas: ['Carga y', 'datos'] });
   if (cat === 'powerbank') out.push({ icono: 'bateria', lineas: ['Energía donde', 'la necesites'] });
   if (cat === 'cargador') out.push({ icono: 'rayo', lineas: ['Carga rápida', 'y segura'] });
+  }
   for (const g of [
     { icono: 'estrella', lineas: ['Alta', 'calidad'] },
     { icono: 'chip', lineas: ['Diseño', 'elegante'] },

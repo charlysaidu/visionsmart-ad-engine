@@ -194,15 +194,16 @@ export function titulo(d: Dibujo, lineas: string[], tam: number): string {
   d.defs.push(gradColores('acento', p.acento, 0));
   const interlineado = tam * 1.06;
   const fam = p.titulo.peso === 'bold' ? d.fu.bold : d.fu.extrabold;
+  const cTit = p.colores?.titulo ?? p.texto;
   const txt = (s: string, y: number, fill: string) => `<text x="${t.x}" y="${n(y)}" font-family="${fam}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${fill}">${esc(s)}</text>`;
   if (lineas.length === 1) {
     const palabras = lineas[0].split(' ');
-    if (palabras.length === 1) return txt(palabras[0], t.y, p.texto);
+    if (palabras.length === 1) return txt(palabras[0], t.y, cTit);
     const ultima = palabras.pop()!;
-    return `<text x="${t.x}" y="${n(t.y)}" font-family="${fam}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${p.texto}">${esc(palabras.join(' '))} <tspan fill="${fillGrad('acento')}">${esc(ultima)}</tspan></text>`;
+    return `<text x="${t.x}" y="${n(t.y)}" font-family="${fam}" font-size="${n(tam)}" text-anchor="${t.ancla}" fill="${cTit}">${esc(palabras.join(' '))} <tspan fill="${fillGrad('acento')}">${esc(ultima)}</tspan></text>`;
   }
   // varias lineas: las primeras en el color de texto y la ultima con el degradado de acento
-  return lineas.map((l, i) => txt(l, t.y + i * interlineado, i === lineas.length - 1 ? fillGrad('acento') : p.texto)).join('');
+  return lineas.map((l, i) => txt(l, t.y + i * interlineado, i === lineas.length - 1 ? fillGrad('acento') : cTit)).join('');
 }
 // ── Lista de caracteristicas ────────────────────────────────────────────────────
 function iconoSvg(d: Dibujo, id: Caracteristica['icono'], cx: number, cy: number, tam: number): string {
@@ -236,7 +237,7 @@ export function lista(d: Dibujo, items: Caracteristica[]): string {
     const lineas = it.lineas.length === 1 ? partirTexto(it.lineas[0], 'regular', L.tam, anchoTexto, fila ? 3 : 2) : it.lineas.map((s) => partirTexto(s, 'regular', L.tam, anchoTexto, 1)[0]);
     out.push(iconoSvg(d, it.icono, cx, cy, L.icono));
     const y0 = cy - ((lineas.length - 1) * L.tam * 1.2) / 2 + L.tam * 0.34;
-    lineas.forEach((s, j) => out.push(`<text x="${n(xt)}" y="${n(y0 + j * L.tam * 1.2)}" font-family="${d.fu.regular}" font-size="${L.tam}" fill="${p.texto}">${esc(s)}</text>`));
+    lineas.forEach((s, j) => out.push(`<text x="${n(xt)}" y="${n(y0 + j * L.tam * 1.2)}" font-family="${d.fu.regular}" font-size="${L.tam}" fill="${p.colores?.lista ?? p.texto}">${esc(s)}</text>`));
   });
   return out.join('');
 }
@@ -293,12 +294,17 @@ export function precio(d: Dibujo, texto: string | null, etiqueta: string | null,
     const totalW = juntos ? wEt + gap + wAnt : wAnt;
     const x0 = P.ancla === 'end' ? xTxt - totalW : P.ancla === 'middle' ? xTxt - totalW / 2 : xTxt;
     const xAnt = juntos ? x0 + wEt + gap : P.ancla === 'end' ? xTxt - wAnt : P.ancla === 'middle' ? xTxt - wAnt / 2 : xTxt;
-    const colorAnt = esColorClaro(p.texto) ? '#FFFFFF' : p.texto, opAnt = 0.94;
+    const colorAnt = p.colores?.tachado ?? (esColorClaro(p.texto) ? '#FFFFFF' : p.texto), opAnt = 0.94;
     const grosor = Math.max(3, Math.round(tamAnt * 0.11));
     out.push(`<text x="${n(xAnt)}" y="${n(yAnt)}" font-family="${d.fu.bold}" font-size="${tamAnt}" text-anchor="start" fill="${colorAnt}" fill-opacity="${opAnt}">${esc(txtAnt)}</text>`);
     out.push(`<line x1="${n(xAnt - 4)}" y1="${n(yAnt - tamAnt * 0.32)}" x2="${n(xAnt + wAnt + 4)}" y2="${n(yAnt - tamAnt * 0.32)}" stroke="${colorAnt}" stroke-opacity="${opAnt}" stroke-width="${grosor}" stroke-linecap="round"/>`);
     if (etiqueta) {
-      const xEt = juntos ? x0 : xAnt, yEtq = juntos ? yAnt : yAnt - tamAnt * 1.3;                 // apilada: encima del anterior, nunca sobre el precio ni el tachado
+      let xEt = juntos ? x0 : xAnt;
+      const yEtq = juntos ? yAnt : yAnt - tamAnt * 1.3;                                          // apilada: encima del anterior, nunca sobre el precio ni el tachado
+      // etiqueta apilada mas ancha que el precio anterior: si se saldria del margen derecho (48 px), se corre a la izquierda hasta caber.
+      // Solo en la coleccion 02: la salida de las plantillas 1-10 se conserva byte a byte (huellas de regresion).
+      const tope = d.W - 48;
+      if (d.p.coleccion === 2 && !juntos && xEt + wEt > tope) xEt = tope - wEt;
       out.push(`<text x="${n(xEt)}" y="${n(yEtq)}" font-family="${d.fu.bold}" font-size="${lblEt}" letter-spacing="3" text-anchor="start" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);
     }
   } else if (etiqueta) out.push(`<text x="${xTxt}" y="${n(yEt)}" font-family="${d.fu.bold}" font-size="${lblEt}" letter-spacing="3" text-anchor="${P.ancla}" fill="${p.precio.desde}">${esc(etiqueta)}</text>`);  out.push(`<text x="${xTxt}" y="${n(P.y)}" font-family="${d.fu.extrabold}" font-size="${tam}" text-anchor="${P.ancla}" fill="${fillGrad('precioG')}">${esc(texto)}</text>`);
@@ -326,7 +332,7 @@ export function promoExtras(d: Dibujo, promo: PromoCalculada): string {
     const P = d.lay.pie, tam = Math.round(d.W * (d.p.familia === 'editorial' ? 0.022 : 0.026));
     // por defecto justo sobre el pie; nunca pegada al precio (si el pie queda muy cerca del precio, baja lo justo para despejarlo)
     const yVig = Math.max(P.y - d.W * 0.034, d.lay.precio.y + 16 + tam * 0.74);
-    out.push(`<text x="${P.x}" y="${n(yVig)}" font-family="${d.fu.bold}" font-size="${tam}" letter-spacing="1" text-anchor="${P.ancla}" fill="${d.p.texto}">${esc(promo.vigencia)}</text>`);
+    out.push(`<text x="${P.x}" y="${n(yVig)}" font-family="${d.fu.bold}" font-size="${tam}" letter-spacing="1" text-anchor="${P.ancla}" fill="${d.p.colores?.vigencia ?? d.p.texto}">${esc(promo.vigencia)}</text>`);
   }
   return out.join('');
 }

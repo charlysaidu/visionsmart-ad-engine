@@ -80,7 +80,7 @@ test('repartirPlantillas: nunca repite la misma plantilla seguida y reparte pare
     for (let i = 1; i < r.length; i++) assert.notEqual(r[i], r[i - 1], `semilla ${semilla} pos ${i}`);
     const cuenta = new Map<string, number>(); r.forEach((x) => cuenta.set(x, (cuenta.get(x) ?? 0) + 1));
     const valores = [...cuenta.values()];
-    assert.ok(Math.max(...valores) - Math.min(...(valores.length === 10 ? valores : [0])) <= 1 || valores.length <= 10, 'reparto parejo');
+    assert.ok(valores.length === IDS_PLANTILLAS.length && Math.max(...valores) - Math.min(...valores) <= 1, 'reparto parejo (37 imagenes entre las 20 plantillas: cada una sale 1 o 2 veces)');
     assert.ok(Math.max(...valores) <= Math.ceil(37 / 10) + 0, `uso maximo ${Math.max(...valores)}`);
   }
 });

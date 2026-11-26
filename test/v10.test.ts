@@ -19,9 +19,10 @@ const prod = (nombre: string) => ({ nombre, precioUsd: 24.9, fotoHref: FOTO, gar
 const PROMO = { activa: true, precioPromoUsd: 19.9, unidades: 12, vigenciaISO: '2026-12-24' };
 const ctx = (nombre = NOMBRES[1], extra: any = {}) => ({ producto: prod(nombre), tasaBs: 203.456, precio: 'bs' as const, ...extra });
 
-test('version del motor 1.x y los 10 IDs de siempre, en el mismo orden', () => {
+test('version del motor 1.x; los 10 IDs de la coleccion 01 intactos y en el mismo orden (+ 10 de la coleccion 02)', () => {
   assert.match(VERSION_MOTOR, /^[1-9]\d*\.\d+\.\d+$/);
-  assert.deepEqual(IDS_PLANTILLAS, ['black-premium', 'pure-white', 'blue-signature', 'purple-edition', 'gradient-experience', 'product-spotlight', 'tech-editorial', 'modern-glass', 'dynamic-tech', 'luxury-minimal']);
+  assert.equal(IDS_PLANTILLAS.length, 20);
+  assert.deepEqual(IDS_PLANTILLAS.slice(0, 10), ['black-premium', 'pure-white', 'blue-signature', 'purple-edition', 'gradient-experience', 'product-spotlight', 'tech-editorial', 'modern-glass', 'dynamic-tech', 'luxury-minimal']);
 });
 
 // ── contrato 4:5 · borde a borde (R20) ──────────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ test('la franja inferior del pie translucido (R20) queda libre: todo el contenid
     sobre(l.garantia.y + l.garantia.h, 'garantia');
     sobre(l.precio.y + 24, 'precio (con su filete)');
     sobre(l.podio.cy + (PLANTILLAS[id].podio.tipo === 'ninguno' ? 0 : l.podio.alto + l.podio.ry), 'plataforma');
-    if (l.lista.cantidad > 0) sobre(l.lista.modo === 'fila' ? l.lista.y + l.lista.icono + (l.lista.bloque ? 32 : 0) : l.lista.y + (l.lista.cantidad - 1) * l.lista.paso + l.lista.icono + (l.lista.bloque ? 32 : 0), 'lista');
+    if (l.lista.cantidad > 0) { const filas = l.lista.modo === 'rejilla' ? Math.ceil(l.lista.cantidad / 2) : l.lista.cantidad; sobre(l.lista.modo === 'fila' ? l.lista.y + l.lista.icono + (l.lista.bloque ? 32 : 0) : l.lista.y + (filas - 1) * (l.lista.pasoY ?? l.lista.paso) + l.lista.icono + (l.lista.bloque ? 32 : 0), 'lista'); }
     assert.deepEqual({ ...l.pie }, { x: 540, y: 1310, ancla: 'middle' }, `${id}: el pie va centrado en la franja`);
   }
 });
@@ -89,7 +90,7 @@ test('ningun texto pisa a otro texto (titulo corto / normal / larguisimo, con y 
       assert.ok(!cruza, `${id} ${f} «${nombre.slice(0, 18)}» ${JSON.stringify(Object.keys(extra))}: «${a.txt.slice(0, 24)}» pisa a «${b.txt.slice(0, 24)}»`);
     }
   }
-  assert.equal(casos, 10 * 3 * 3 * 3);
+  assert.equal(casos, IDS_PLANTILLAS.length * 3 * 3 * 3);
 });
 
 test('4:5: ningun texto entra en la franja del pie translucido salvo el pie centrado y la vigencia (que va justo encima del pie)', () => {
@@ -142,11 +143,13 @@ const mezcla = (fg: string, bg: string, op: number) => { const f = parseInt(fg.s
 for (const [id, v] of [...IDS_PLANTILLAS.map((i) => [i, undefined] as const), ['luxury-minimal', 'oscuro'] as const]) {
   test(`contraste ${id}${v ? ' (' + v + ')' : ''}: texto, precio, etiqueta, tachado y chip legibles sobre los colores del fondo`, () => {
     const p = plantillaDe(id, v), fondos = p.fondo.paradas.map((x) => x[1]);
-    for (const bg of fondos) {
-      assert.ok(cr(p.texto, bg) >= 4.5, `texto ${p.texto} sobre ${bg}: ${cr(p.texto, bg).toFixed(2)}`);
+    const cTit = p.colores?.titulo ?? p.texto;                                          // composiciones mixtas: el titulo puede ir sobre otra superficie (p. ej. bloque negro)
+    for (const bg of p.superficies?.titulo ?? fondos) assert.ok(cr(cTit, bg) >= 4.5, `titulo ${cTit} sobre ${bg}: ${cr(cTit, bg).toFixed(2)}`);
+    for (const bg of fondos) assert.ok(cr(p.colores?.lista ?? p.texto, bg) >= 4.5, `texto de la lista sobre ${bg}`);
+    for (const bg of p.superficies?.precio ?? fondos) {
       for (const c of p.precio.color) assert.ok(cr(c, bg) >= 4.5, `precio ${c} sobre ${bg}`);
       assert.ok(cr(p.precio.desde, bg) >= 4.5, `etiqueta ${p.precio.desde} sobre ${bg}: ${cr(p.precio.desde, bg).toFixed(2)}`);
-      const tachado = esColorClaro(p.texto) ? '#FFFFFF' : p.texto;                       // lo que dibuja precio(): blanco en fondos oscuros, el color del texto en claros, al 94 %
+      const tachado = p.colores?.tachado ?? (esColorClaro(p.texto) ? '#FFFFFF' : p.texto);                       // lo que dibuja precio(): blanco en fondos oscuros, el color del texto en claros, al 94 %
       assert.ok(cr(mezcla(tachado, bg, 0.94), bg) >= 4.5, `precio anterior tachado sobre ${bg}: ${cr(mezcla(tachado, bg, 0.94), bg).toFixed(2)}`);
     }
     const chip = p.chip ?? { relleno: p.acento, texto: '#FFFFFF' };

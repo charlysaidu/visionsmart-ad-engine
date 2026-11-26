@@ -22,7 +22,7 @@ import { calcularPromo } from './promo.ts';
 import { capaDeTema, etiquetaDeTema } from './temas/index.ts';
 import { textoBolivares, textoDolares, tituloEnLineas } from './util.ts';
 
-export const VERSION_MOTOR = '1.0.0';
+export const VERSION_MOTOR = '1.1.0';
 export { plantillaDe, varianteSugerida, type VarianteFondo } from './plantillas.ts';
 export { calcularPromo, fechaCorta, textoUnidades, type DatosPromo, type PromoCalculada } from './promo.ts';
 export { repartirPlantillas, crearAleatorio } from './repartir.ts';
@@ -76,7 +76,7 @@ export function renderSvg(id: PlantillaId, ctx: ContextoAnuncio, formato: Format
     P.foto(d, prod.fotoHref),
     P.logo(d),
     P.titulo(d, lineas, tam),
-    P.lista(d, caracteristicasDe(prod, lay.lista.cantidad)),
+    P.lista(d, caracteristicasDe(prod, lay.lista.cantidad, !!lay.lista.soloReales)),
     P.precio(d, txtPrecio, txtPrecio ? etiqueta : null, txtAnterior),
     P.garantia(d, garantiaDe(prod.garantia)),
     promo ? P.promoExtras(d, promo) : '',

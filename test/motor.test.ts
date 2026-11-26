@@ -19,13 +19,15 @@ const TAGS_OK = new Set(['svg', 'defs', 'linearGradient', 'radialGradient', 'sto
 
 const etiquetas = (svg: string) => [...svg.matchAll(/<([A-Za-z][A-Za-z0-9]*)[\s>/]/g)].map((m) => m[1]);
 
-test('hay exactamente 10 plantillas, con los nombres del documento de referencia', () => {
-  assert.equal(IDS_PLANTILLAS.length, 10);
+test('hay exactamente 20 plantillas (colecciones 01 y 02), con los nombres del documento de referencia', () => {
+  assert.equal(IDS_PLANTILLAS.length, 20);
   assert.deepEqual(IDS_PLANTILLAS.map((i) => PLANTILLAS[i].nombre), [
     'BLACK PREMIUM', 'PURE WHITE', 'BLUE SIGNATURE', 'PURPLE EDITION', 'GRADIENT EXPERIENCE',
     'PRODUCT SPOTLIGHT', 'TECH EDITORIAL', 'MODERN GLASS', 'DYNAMIC TECH', 'LUXURY MINIMAL',
+    'NEON EDGE', 'CLEAN HEX', 'COSMIC FLOW', 'MINIMAL STRIPES', 'BLACK GRID', 'PEARL WAVE', 'DUAL TONE', 'INFO BOX', 'VISION FRAME', 'DIAGONAL SPLIT',
   ]);
-  assert.equal(new Set(IDS_PLANTILLAS).size, 10);
+  assert.equal(new Set(IDS_PLANTILLAS).size, 20);
+  IDS_PLANTILLAS.forEach((id, i) => { assert.equal(PLANTILLAS[id].numero, i + 1); assert.equal(PLANTILLAS[id].coleccion, i < 10 ? 1 : 2); assert.ok(PLANTILLAS[id].descripcion.length >= 10 && PLANTILLAS[id].descripcion.length <= 70, id); });
 });
 
 for (const id of IDS_PLANTILLAS) {

@@ -30,7 +30,7 @@ test('renderSvg no cambia: salida identica a las huellas de v1.0.0', () => {
   for (const id of IDS_PLANTILLAS) for (const f of ['4x5', '1x1', '9x16'] as const) for (const [k, c] of Object.entries(casos)) {
     assert.equal(createHash('sha256').update(renderSvg(id, { producto: prod, tasaBs: 163.33, ...c }, f)).digest('hex'), g.casos[`${id}|${f}|${k}`], `${id}|${f}|${k}`); n++;
   }
-  assert.equal(n, 210);
+  assert.equal(n, IDS_PLANTILLAS.length * 3 * 7);
 });
 
 // ── geometria ──
