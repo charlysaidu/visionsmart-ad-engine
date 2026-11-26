@@ -54,15 +54,20 @@ export type DatosComprobante = {
   pago: { metodo: string; lineas?: { metodo: string; monto: MontoComprobante }[] | null };
   entrega: { tipo: 'delivery' | 'pickup' | 'nacional' | 'tienda'; titulo: string; lineas?: string[] };
   garantia: { titulo: string; lineas?: string[] };
-  contacto: { instagram?: string | null; correo?: string | null; sitio?: string | null };
+  /** Canales de contacto. Si no viene, se usa CONTACTO_VISIONSMART (fuente unica). */
+  contacto?: { instagram?: string | null; correo?: string | null; sitio?: string | null } | null;
 };
+
+/** Canales de contacto oficiales de VisionSmart: UNICA fuente del correo de soporte y de Instagram (tarjeta «¿NECESITAS AYUDA?»). WhatsApp se agregara despues. */
+export const CORREO_SOPORTE = 'visionsmart2019@gmail.com';
+export const CONTACTO_VISIONSMART = { instagram: TEXTO_INSTAGRAM, correo: CORREO_SOPORTE, sitio: TEXTO_SITIO } as const;
 
 // ── geometria (unidades del viewBox) ─────────────────────────────────────────
 export const COMPROBANTE_ANCHO = 1240, COMPROBANTE_ALTO = 1754, COMPROBANTE_PX = { ancho: 2480, alto: 3508 } as const;
 const W = COMPROBANTE_ANCHO, H = COMPROBANTE_ALTO, M = 60;
 const COL_I = { x: M, w: 640 }, COL_D = { x: 764, w: 416 };           // 55 % / 37 % + hueco
-const CUERPO_Y = 346, CUERPO_B = 1320;                                 // franja del cuerpo
-const FILA = 92, ITEM_H = 84;                                          // paso y alto de una fila de producto
+const CUERPO_Y = 300, CUERPO_B = 1320;                                 // franja del cuerpo
+const FILA = 106, ITEM_H = 100;                                          // paso y alto de una fila de producto
 const MAX_POR_HOJA = 6;
 const CARDS_Y = 1344, CARDS_H = 180;
 const COND_Y = 1540, PIE_Y = 1664;
@@ -129,12 +134,12 @@ const lineasDireccion = (d: DatosComprobante): string[] => {
 };
 function alturaCliente(d: DatosComprobante): number {
   const c = d.cliente, dir = lineasDireccion(d);
-  return 70 + (c.telefono || c.email ? 58 : 0) + (dir.length ? 38 + dir.length * 27 : 0) + 14;
+  return 64 + (c.telefono || c.email ? 54 : 0) + (dir.length ? 34 + dir.length * 27 : 0) + 10;
 }
 /** Cuantos productos lleva cada hoja. Una sola hoja si caben (con el resumen y el total); si no, hojas parejas de hasta 6. Nunca se omite un producto. */
-export function repartirProductos(totalItems: number, alturaClienteTarjeta = 186): number[] {
+export function repartirProductos(totalItems: number, alturaClienteTarjeta = 186, lineasResumen = 3): number[] {
   const n0 = Math.max(0, Math.floor(totalItems));
-  const fijoUnica = 30 + alturaClienteTarjeta + 8 + 32 + 10 + 12 + 90 + 8 + 86, capUnica = Math.max(1, Math.floor((CUERPO_B - CUERPO_Y - fijoUnica) / FILA));
+  const fijoUnica = 30 + alturaClienteTarjeta + 8 + 32 + 8 + 10 + 28 * Math.max(1, Math.min(3, lineasResumen)) + 6 + 80, capUnica = Math.max(1, Math.floor((CUERPO_B - CUERPO_Y - fijoUnica) / FILA));
   if (n0 <= capUnica) return [n0];
   const hojas = Math.max(2, Math.ceil(n0 / MAX_POR_HOJA)), base = Math.floor(n0 / hojas), extra = n0 % hojas;
   return Array.from({ length: hojas }, (_, i) => base + (i < extra ? 1 : 0));
@@ -152,7 +157,7 @@ function encabezado(d: DatosComprobante, hoja: number, hojas: number): string {
   return s;
 }
 function tira(d: DatosComprobante): string {
-  const y = 226, h = 84, mid = W / 2;
+  const y = 192, h = 84, mid = W / 2;
   const fecha = d.hora ? `${d.fecha} · ${d.hora}` : d.fecha;
   return tarjeta(M, y, W - 2 * M, h, 24) + `<line x1="${mid}" y1="${y + 18}" x2="${mid}" y2="${y + h - 18}" stroke="${C.borde}" stroke-width="2"/>` +
     etq(M + 34, y + 33, 'NÚMERO DE VENTA') + T(M + 34, y + 69, tamParaAncho(d.numero, 'extrabold', 440, 38, 26), F.extrabold, AZUL, d.numero) +
@@ -167,12 +172,12 @@ function bloqueCliente(d: DatosComprobante, y: number): { svg: string; h: number
   let s = seccion(x, y + 14, 'DATOS DEL CLIENTE') + tarjeta(x, y + 30, w, hCard);
   const y0 = y + 30;
   s += T(x + pad, y0 + 46, tamParaAncho(c.nombre || 'Cliente', 'extrabold', w - 2 * pad, 30, 20), F.extrabold, C.texto, c.nombre || 'Cliente');
-  let cy = y0 + 72;
+  let cy = y0 + 66;
   const campo = (xx: number, yy: number, ww: number, rot: string, val: string): string => etq(xx, yy + 6, rot, C.gris, 'start', 14) + T(xx, yy + 32, 22, F.bold, C.texto, recortar(val, 'bold', 22, ww));
   if (c.telefono || c.email) {
     if (c.telefono && c.email) s += campo(x + pad, cy, (w - 3 * pad) * 0.4, 'TELÉFONO', c.telefono) + campo(x + pad + (w - 3 * pad) * 0.4 + pad, cy, (w - 3 * pad) * 0.6, 'CORREO', c.email);
     else s += c.telefono ? campo(x + pad, cy, w - 2 * pad, 'TELÉFONO', c.telefono) : campo(x + pad, cy, w - 2 * pad, 'CORREO', String(c.email));
-    cy += 58;
+    cy += 54;
   }
   const dir = lineasDireccion(d);
   if (dir.length) { s += etq(x + pad, cy + 6, 'DIRECCIÓN', C.gris, 'start', 14); dir.forEach((l, i) => { s += T(x + pad, cy + 32 + i * 27, 22, F.bold, C.texto, l); }); }
@@ -180,11 +185,11 @@ function bloqueCliente(d: DatosComprobante, y: number): { svg: string; h: number
 }
 function fila(it: ItemComprobante, x: number, y: number, w: number): string {
   let s = tarjeta(x, y, w, ITEM_H, 18);
-  const fx = x + 8, fy = y + 8, fd = ITEM_H - 16;
+  const fx = x + 6, fy = y + 6, fd = ITEM_H - 12;
   s += rr(fx, fy, fd, fd, 12, PERLA, ` stroke="${C.borde}" stroke-width="1"`);
-  if (it.foto) s += `<image href="${esc(it.foto)}" x="${n(fx + 4)}" y="${n(fy + 4)}" width="${n(fd - 8)}" height="${n(fd - 8)}" preserveAspectRatio="xMidYMid meet"/>`;
+  if (it.foto) s += `<image href="${esc(it.foto)}" x="${n(fx + 3)}" y="${n(fy + 3)}" width="${n(fd - 6)}" height="${n(fd - 6)}" preserveAspectRatio="xMidYMid meet"/>`;
   else s += logoImg(fx + fd / 2, fy + fd / 2, fd * 0.55, ' opacity="0.35"');
-  const tx = x + 8 + fd + 16, wPrecio = 176, wTxt = w - (tx - x) - wPrecio - 22;
+  const tx = x + 6 + fd + 16, wPrecio = 172, wTxt = w - (tx - x) - wPrecio - 22;
   const nombre = envolver(it.nombre || 'Producto', 'bold', 23, wTxt, 2);
   const partes = [it.modelo ? String(it.modelo) : '', it.garantia ? String(it.garantia) : ''].filter(Boolean);
   const sub = nombre.length === 1 ? partes : partes.length ? [partes.join(' · ')] : [];
@@ -192,9 +197,9 @@ function fila(it: ItemComprobante, x: number, y: number, w: number): string {
   nombre.forEach((l, i) => { s += T(tx, y0 + 21 + i * 27, 23, F.bold, C.texto, l); });
   sub.forEach((l, i) => { s += T(tx, y0 + nombre.length * 27 + 18 + i * 22, 16, F.regular, C.gris, recortar(l, 'regular', 16, wTxt)); });
   const px = x + w - 20, st = formatoMonto(it.subtotal);
-  s += T(px, y + 38, tamParaAncho(st, 'extrabold', wPrecio, 28, 17), F.extrabold, MORADO, st, 'end');
+  s += T(px, y + 46, tamParaAncho(st, 'extrabold', wPrecio, 28, 17), F.extrabold, MORADO, st, 'end');
   const cant = it.cantidad > 1 ? `Cant. ${it.cantidad} × ${formatoMonto(it.precioUnitario)}` : 'Cant. 1';
-  s += T(px, y + 62, tamParaAncho(cant, 'regular', wPrecio, 16, 11), F.regular, C.gris, cant, 'end');
+  s += T(px, y + 72, tamParaAncho(cant, 'regular', wPrecio, 16, 11), F.regular, C.gris, cant, 'end');
   return s;
 }
 function resumenYTotal(d: DatosComprobante, y: number): string {
@@ -203,10 +208,10 @@ function resumenYTotal(d: DatosComprobante, y: number): string {
   if (d.resumen.delivery) lineas.push(['Delivery', formatoMonto(d.resumen.delivery), C.texto]);
   if (d.resumen.descuento) lineas.push([d.resumen.descuento.etiqueta || 'Descuento', '-' + formatoMonto(d.resumen.descuento.monto).replace(/^-/, ''), C.verdeTexto]);
   let s = `<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="${C.borde}" stroke-width="2"/>`;
-  lineas.forEach(([a, b, col], i) => { const yy = y + 26 + i * 30; s += T(x + 6, yy, 21, F.regular, C.gris, a) + T(x + w - 6, yy, 22, F.bold, col, b, 'end'); });
-  const yb = y + 12 + lineas.length * 30 + 8, total = d.total.map(formatoMonto).join('  +  ');
-  s += rr(x, yb, w, 86, 24, 'url(#cmpBanda)') + T(x + 30, yb + 52, 22, F.bold, C.blanco, 'TOTAL PAGADO', 'start', ' letter-spacing="2.4"') +
-    T(x + w - 30, yb + 56, tamParaAncho(total, 'extrabold', w - 320, 44, 22), F.extrabold, C.blanco, total, 'end');
+  lineas.forEach(([a, b, col], i) => { const yy = y + 24 + i * 28; s += T(x + 6, yy, 21, F.regular, C.gris, a) + T(x + w - 6, yy, 22, F.bold, col, b, 'end'); });
+  const yb = y + 10 + lineas.length * 28 + 6, total = d.total.map(formatoMonto).join('  +  ');
+  s += rr(x, yb, w, 80, 24, 'url(#cmpBanda)') + T(x + 30, yb + 49, 22, F.bold, C.blanco, 'TOTAL PAGADO', 'start', ' letter-spacing="2.4"') +
+    T(x + w - 30, yb + 53, tamParaAncho(total, 'extrabold', w - 320, 44, 22), F.extrabold, C.blanco, total, 'end');
   return s;
 }
 function panelPago(d: DatosComprobante): string {
@@ -244,7 +249,7 @@ function tarjetasInferiores(d: DatosComprobante): string {
   };
   const ico = d.entrega.tipo === 'delivery' ? 'moto' : d.entrega.tipo === 'nacional' ? 'paquete' : 'tienda';
   const ayuda: string[] = [];
-  const ct = d.contacto;
+  const ct = d.contacto ?? CONTACTO_VISIONSMART;
   if (ct.instagram) ayuda.push(ct.instagram);
   if (ct.correo) ayuda.push(ct.correo);
   if (ct.sitio) ayuda.push(ct.sitio);
@@ -265,7 +270,7 @@ function pie(): string {
 }
 
 /** Cuantas hojas tendra el comprobante y cuantos productos lleva cada una. */
-export const hojasDeComprobante = (d: DatosComprobante): number[] => repartirProductos(d.items.length, alturaCliente(d));
+export const hojasDeComprobante = (d: DatosComprobante): number[] => repartirProductos(d.items.length, alturaCliente(d), 1 + (d.resumen.delivery ? 1 : 0) + (d.resumen.descuento ? 1 : 0));
 
 /** Una pagina SVG por hoja (A4 a 300 dpi). */
 export function renderComprobante(d: DatosComprobante): string[] {
@@ -283,7 +288,7 @@ export function renderComprobante(d: DatosComprobante): string[] {
     y += 32;
     items.forEach((it, i) => { cuerpo += fila(it, COL_I.x, y + i * FILA, COL_I.w); });
     y += items.length * FILA;
-    if (ultima) cuerpo += resumenYTotal(d, y + 10);
+    if (ultima) cuerpo += resumenYTotal(d, y + 8);
     else cuerpo += T(COL_I.x + COL_I.w, y + 26, 19, F.bold, MORADO, `Continúa en la hoja ${h + 2} →`, 'end');
     cuerpo += panelPago(d) + tarjetasInferiores(d) + condiciones() + pie();
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${COMPROBANTE_PX.ancho}" height="${COMPROBANTE_PX.alto}" viewBox="0 0 ${W} ${H}"><defs>${defs}</defs>${cuerpo}</svg>`;

@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  VERSION_MOTOR, renderComprobante, repartirProductos, hojasDeComprobante, formatoMonto, CONDICIONES_GARANTIA, COMPROBANTE_PX, medir,
+  VERSION_MOTOR, CONTACTO_VISIONSMART, CORREO_SOPORTE, renderComprobante, repartirProductos, hojasDeComprobante, formatoMonto, CONDICIONES_GARANTIA, COMPROBANTE_PX, medir,
   type DatosComprobante, type ItemComprobante, type MontoComprobante,
 } from '../src/index.ts';
 import { renderComprobanteConFuentes } from '../src/con-fuentes.ts';
@@ -24,7 +24,7 @@ const base = (k: number, extra: Partial<DatosComprobante> = {}, opc = {}): Datos
   items: items(k, opc), resumen: { subtotal: usd(100), delivery: bs(150), descuento: { etiqueta: 'Combo (10%)', monto: usd(10) } },
   total: [usd(50), bs(10587.18)], equivalente: usd(141.36), pago: { metodo: 'Pago combinado', lineas: [{ metodo: 'Efectivo ($)', monto: usd(50) }, { metodo: 'Pago Móvil', monto: bs(10587.18) }] },
   entrega: { tipo: 'delivery', titulo: 'Delivery a domicilio', lineas: ['Repartidor: Jesús Morales', 'Costo: Bs 150,00'] }, garantia: { titulo: 'Por producto', lineas: ['Cubre defectos de fábrica.', 'Plazo y fecha en cada producto.'] },
-  contacto: { instagram: '@visionsmart.app', correo: 'visionsmart.app@gmail.com', sitio: 'visionsmart.app' }, ...extra,
+  contacto: CONTACTO_VISIONSMART, ...extra,
 });
 
 type Txt = { txt: string; x0: number; x1: number; y0: number; y1: number; tam: number };
@@ -81,8 +81,8 @@ test('textos: ninguno sale del lienzo ni de sus margenes, ninguno pisa a otro, e
         assert.ok(t.x0 >= 56 && t.x1 <= 1240 - 56 + 0.5 && t.y0 >= 0 && t.y1 <= 1754, `${k} ${moneda} ${variante} hoja ${h + 1}: «${t.txt.slice(0, 30)}» fuera (${Math.round(t.x0)}..${Math.round(t.x1)}, ${Math.round(t.y1)})`);
         if (t.y1 > 1664) continue;                                                        // el pie negro tiene sus propios textos
         if (t.y0 > 1535) assert.ok(t.y1 <= 1660, `condiciones: «${t.txt.slice(0, 20)}» invade el pie`);
-        if (t.y0 > 335 && t.y0 < 1335 && t.x0 < 720) assert.ok(t.y1 <= 1322, `${k} ${variante}: «${t.txt.slice(0, 24)}» invade las tarjetas (y ${Math.round(t.y1)})`);
-        if (t.y0 > 335 && t.y0 < 1335 && t.x0 >= 764) assert.ok(t.x0 >= 764 + 30 && t.x1 <= 1180 - 30 + 0.5 && t.y1 <= 1322, `panel: «${t.txt.slice(0, 24)}» fuera del panel`);
+        if (t.y0 > 285 && t.y0 < 1335 && t.x0 < 720) assert.ok(t.y1 <= 1322, `${k} ${variante}: «${t.txt.slice(0, 24)}» invade las tarjetas (y ${Math.round(t.y1)})`);
+        if (t.y0 > 285 && t.y0 < 1335 && t.x0 >= 764) assert.ok(t.x0 >= 764 + 30 && t.x1 <= 1180 - 30 + 0.5 && t.y1 <= 1322, `panel: «${t.txt.slice(0, 24)}» fuera del panel`);
       }
       for (let i = 0; i < ts.length; i++) for (let j = i + 1; j < ts.length; j++) {
         const a = ts[i], b = ts[j], ox = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), oy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
@@ -96,7 +96,7 @@ test('ningun producto se elimina ni se lee mal: todos aparecen (el nombre comple
   const d = base(13); const todo = renderComprobante(d).map(textosDe).flat();
   for (const it of d.items) assert.ok(todo.some((t) => t.txt.startsWith(it.nombre.split(' ').slice(0, 2).join(' '))), `falta ${it.nombre}`);
   for (const it of d.items) assert.ok(todo.some((t) => t.txt === formatoMonto(it.subtotal)), `falta el precio ${formatoMonto(it.subtotal)}`);
-  const piso = Math.min(...todo.filter((t) => t.y0 > 335 && t.y1 < 1330 && t.x0 < 720).map((t) => t.tam)); assert.ok(piso >= 14, `texto demasiado pequeño: ${piso}`);
+  const piso = Math.min(...todo.filter((t) => t.y0 > 285 && t.y1 < 1330 && t.x0 < 720).map((t) => t.tam)); assert.ok(piso >= 14, `texto demasiado pequeño: ${piso}`);
   assert.ok(Math.min(...todo.filter((t) => t.y0 > 1535 && t.y1 < 1660).map((t) => t.tam)) >= 15, 'las condiciones de garantia son letra pequeña pero legible (>= 15 unidades = 7 pt en A4)');
 });
 
@@ -145,3 +145,9 @@ test('hojas de continuacion: encabezado y panel iguales, «hoja n de N», aviso 
   assert.ok(!t1.includes('TOTAL PAGADO'.padEnd(12)) || true); assert.ok(t2.filter((x) => x === 'TOTAL PAGADO').length >= 1 && t2.includes('Subtotal') && !t1.includes('Subtotal'));
   assert.ok(t1.includes('#000000412') && t2.includes('#000000412') && t1.includes('RESUMEN DE PAGO') && t2.includes('RESUMEN DE PAGO'));
 });
+
+test('correo de soporte: UNICA constante visionsmart2019@gmail.com; el valor viejo no aparece en ninguna hoja', () => {
+  assert.equal(CORREO_SOPORTE, 'visionsmart2019@gmail.com'); assert.equal(CONTACTO_VISIONSMART.correo, CORREO_SOPORTE);
+  for (const d of [base(1), base(1, { contacto: undefined }), base(10)]) for (const pg of renderComprobante(d)) { assert.ok(!pg.includes('visionsmart.app@gmail.com')); assert.ok(pg.includes('visionsmart2019@gmail.com')); }
+});
+
